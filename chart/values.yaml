@@ -1,0 +1,88 @@
+replicaCount: 1
+
+directus:
+  key: "255d861b-5ea1-5996-9aa3-922530ec40b1"
+  secret: "6116487b-cda1-52c2-b5b5-c8022c45e263"
+  accessToken:
+    ttl: 16m
+  refreshToken:
+    ttl: 7d
+    cookieSecure: false
+    cookieSameSite: lax
+  admin:
+    email: "admin@minsky.cc"
+    password: "admin1234"
+  port: 8055
+  publicURL: "/"
+  rateLimiter:
+    enabled: true
+    store: "memory"
+    points: 25
+    duration: 1
+  cache:
+    enabled: false
+  extensions:
+    path: "./extensions"
+  database:
+    uri: ""
+  storage:
+    s3:
+      endpoint: ""
+      accessKey: ""
+      secretKey: ""
+      region: ""
+      bucket: ""
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+    - host: bastion.minsky.cc
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: bastion.minsky.cc-cert
+      hosts:
+        - bastion.minsky.cc
+
+image:
+  repository: directus/directus
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
