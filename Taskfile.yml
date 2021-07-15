@@ -3,4 +3,4 @@ version: "3"
 tasks:
   helm-deploy:
     cmds:
-      - helm upgrade --install bastion chart/
+      - helm upgrade --install -f values.yaml bastion chart/

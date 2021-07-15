@@ -52,8 +52,6 @@ spec:
               value: "{{ .Values.directus.storage.s3.region }}"
             - name: STORAGE_LOCAL_BUCKET
               value: "{{ .Values.directus.storage.s3.bucket }}"
-            - name: DB_CONNECTION_STRING
-              value: "{{ .Values.directus.database.uri }}"
             - name: ACCESS_TOKEN_TTL
               value: "{{ .Values.directus.accessToken.ttl }}"
             - name: REFRESH_TOKEN_TTL
@@ -78,6 +76,22 @@ spec:
               value:  "{{ .Values.directus.cache.enabled }}"
             - name: EXTENSIONS_PATH
               value: "{{ .Values.directus.extensions.path }}"
+            - name: DB_CONNECTION_STRING_URL
+              value: "{{ .Values.directus.database.uri }}"
+            - name: DB_CLIENT
+              value:  "{{ .Values.directus.database.client }}"
+            - name: DB_HOST
+              value: "{{ .Values.directus.database.host }}"
+            - name: DB_PORT
+              value: "{{ .Values.directus.database.port }}"
+            - name: DB_DATABASE
+              value: "{{ .Values.directus.database.database }}"
+            - name: DB_USER
+              value: "{{ .Values.directus.database.user }}"
+            - name: DB_PASSWORD
+              value: "{{ .Values.directus.database.password }}"
+            - name: DB_SSL
+              value: "{{ .Values.directus.database.ssl }}"
           ports:
             - name: http
               containerPort: 8055

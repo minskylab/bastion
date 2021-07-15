@@ -1,12 +1,28 @@
 replicaCount: 1
 
 directus:
+  database:
+    uri: ""
+    client: "pg"
+    host: ""
+    port: ""
+    database: ""
+    user: ""
+    password: ""
+    ssl: false
+  storage:
+    s3:
+      endpoint: ""
+      accessKey: ""
+      secretKey: ""
+      region: ""
+      bucket: ""
   key: "255d861b-5ea1-5996-9aa3-922530ec40b1"
   secret: "6116487b-cda1-52c2-b5b5-c8022c45e263"
   accessToken:
     ttl: 16m
   refreshToken:
-    ttl: 7d
+    ttl: 5d
     cookieSecure: false
     cookieSameSite: lax
   admin:
@@ -23,15 +39,7 @@ directus:
     enabled: false
   extensions:
     path: "./extensions"
-  database:
-    uri: ""
-  storage:
-    s3:
-      endpoint: ""
-      accessKey: ""
-      secretKey: ""
-      region: ""
-      bucket: ""
+
 service:
   type: ClusterIP
   port: 80
