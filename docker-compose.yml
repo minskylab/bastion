@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: example
   bastion-migration:
     build: .
-    command: migrate
+    command: push
     environment:
       DATABASE_URL: postgres://postgres:example@db:5432/postgres
     depends_on:
