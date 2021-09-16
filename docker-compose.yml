@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: changemeplease
+  bastion-migration:
+    build: .
+    command: push
+    environment:
+      DATABASE_URL: postgres://postgres:changemeplease@db:5432/postgres
+    depends_on:
+      - db
+  bastion-studio:
+    build: .
+    command: studio
+    ports:
+      - "8888:8888"
+    environment:
+      DATABASE_URL: postgres://postgres:changemeplease@db:5432/postgres
+    depends_on:
+      - db
+  pgweb:
+    image: sosedoff/pgweb
+    environment:
+      DATABASE_URL: postgres://postgres:changemeplease@db:5432/postgres?sslmode=disable
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+  graphql-engine:
+    image: hasura/graphql-engine:v2.0.9
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - bastion-migration
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:changemeplease@db:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
