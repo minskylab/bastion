@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+  bastion-migration:
+    build: .
+    command: migrate
+    environment:
+      DATABASE_URL: postgres://postgres:example@db:5432/postgres
+    depends_on:
+      - db
+  bastion-studio:
+    build: .
+    command: studio
+    ports:
+      - "8888:8888"
+    environment:
+      DATABASE_URL: postgres://postgres:example@db:5432/postgres
+    depends_on:
+      - db

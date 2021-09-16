@@ -1,0 +1,23 @@
+{
+  "name": "bastion",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/minskylab/bastion.git",
+  "author": "Bregy Malpartida <bregy@minsky.cc>",
+  "license": "MIT",
+  "scripts": {
+    "generate": "yarn prisma generate",
+    "migrate": "yarn prisma migrate dev --name init --skip-generate",
+    "studio": "yarn prisma studio --port 8888",
+    "push": "yarn prisma db push"
+  },
+  "devDependencies": {
+    "@types/node": "^16.9.1",
+    "prisma": "2.26.0",
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "@prisma/client": "2.26.0"
+  }
+}
