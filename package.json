@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "generate": "yarn prisma generate",
-    "push": "yarn prisma db push --skip-generate",
+    "push": "yarn prisma db push --skip-generate --accept-data-loss",
     "studio": "yarn prisma studio --port 8888"
   },
   "devDependencies": {
