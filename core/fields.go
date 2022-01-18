@@ -5,7 +5,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/field"
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 var SystemFields = []ent.Field{
