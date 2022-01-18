@@ -19,7 +19,7 @@ model Organization {
     name String
 
     projects   Project[]
-    developers Developer[]
+    developers Member[]
 
     @@unique([name], name: "Organization_name")
 }
@@ -36,12 +36,20 @@ model Project {
     organization   Organization @relation(fields: [organizationID], references: [id])
     organizationID String       @db.Uuid
 
-    developers Developer[]
+    developers Member[]
 
     @@unique([name], name: "Project_name")
 }
 
-model Developer {
+model Role {
+    id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+
+}
+
+model Member {
     id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now()) @updatedAt

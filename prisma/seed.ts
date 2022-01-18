@@ -19,4 +19,5 @@ client.project
   })
   .then((project) => {
     console.log(`project created id: ${project.id}`);
-  });
+  })
+  .catch((error) => console.error(error));
