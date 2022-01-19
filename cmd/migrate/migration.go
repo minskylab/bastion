@@ -4,13 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql/schema"
 	"github.com/minskylab/bastion/ent"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	entsql "entgo.io/ent/dialect/sql"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -66,13 +66,13 @@ func Open(databaseURL string, debug bool) (*ent.Client, *sql.DB) {
 	for i := 0; i < tries; i++ {
 		db, err = sql.Open("pgx", databaseURL)
 		if err != nil {
-			log.Println("[ERROR]", err.Error())
+			logrus.Warn("[ERROR]", err.Error())
 		}
 		time.Sleep(6 * time.Second)
 	}
 
 	if db == nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	drv := entsql.OpenDB(dialect.Postgres, db)
@@ -112,7 +112,7 @@ func AutoMigration(ctx context.Context, client *ent.Client, db *sql.DB) error {
 					qFunc := fmt.Sprintf(pgTimestampUpdateTrigger, t.Name)
 
 					if _, err := db.Exec(qFunc); err != nil {
-						log.Printf("error at create update_at timestamp trigger: %s\n", err.Error())
+						logrus.Printf("error at create update_at timestamp trigger: %s\n", err.Error())
 						continue
 					}
 				}

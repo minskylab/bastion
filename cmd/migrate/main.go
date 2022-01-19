@@ -4,32 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 
 	// postgresql driver
 	// _ "github.com/lib/pq"
+	"github.com/gookit/config/v2"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 func main() {
-	// client, err := ent.Open("postgres", "host=localhost port=5432 user=postgres dbname=postgres password=postgrespassword sslmode=disable")
-	// if err != nil {
-	// 	log.Fatalf("failed connecting to mysql: %v", err)
-	// }
-	// defer client.Close()
+	godotenv.Load()
+	config.WithOptions(config.ParseEnv)
 
-	// ctx := context.Background()
-
-	// if err = client.Schema.Create(
-	// 	ctx,
-	// 	migrate.WithGlobalUniqueID(true),
-	// 	migrate.WithDropIndex(true),
-	// 	migrate.WithDropColumn(true),
-	// ); err != nil {
-	// 	log.Fatalf("failed creating schema resources: %v", err)
-	// }
-
-	dbURL := "postgres://postgres:postgrespassword@localhost:5432/postgres?sslmode=disable"
+	dbURL := config.Getenv("DATABASE_URL")
 
 	client, db := Open(dbURL, false)
 
