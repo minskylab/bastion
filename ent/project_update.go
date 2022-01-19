@@ -51,14 +51,6 @@ func (pu *ProjectUpdate) SetUpdatedAt(t time.Time) *ProjectUpdate {
 	return pu
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (pu *ProjectUpdate) SetNillableUpdatedAt(t *time.Time) *ProjectUpdate {
-	if t != nil {
-		pu.SetUpdatedAt(*t)
-	}
-	return pu
-}
-
 // SetName sets the "name" field.
 func (pu *ProjectUpdate) SetName(s string) *ProjectUpdate {
 	pu.mutation.SetName(s)
@@ -204,6 +196,7 @@ func (pu *ProjectUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	pu.defaults()
 	if len(pu.hooks) == 0 {
 		affected, err = pu.sqlSave(ctx)
 	} else {
@@ -249,6 +242,14 @@ func (pu *ProjectUpdate) Exec(ctx context.Context) error {
 func (pu *ProjectUpdate) ExecX(ctx context.Context) {
 	if err := pu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (pu *ProjectUpdate) defaults() {
+	if _, ok := pu.mutation.UpdatedAt(); !ok {
+		v := project.UpdateDefaultUpdatedAt()
+		pu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -307,10 +308,10 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -323,10 +324,10 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := pu.mutation.RemovedRolesIDs(); len(nodes) > 0 && !pu.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -342,10 +343,10 @@ func (pu *ProjectUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := pu.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -506,14 +507,6 @@ func (puo *ProjectUpdateOne) SetUpdatedAt(t time.Time) *ProjectUpdateOne {
 	return puo
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (puo *ProjectUpdateOne) SetNillableUpdatedAt(t *time.Time) *ProjectUpdateOne {
-	if t != nil {
-		puo.SetUpdatedAt(*t)
-	}
-	return puo
-}
-
 // SetName sets the "name" field.
 func (puo *ProjectUpdateOne) SetName(s string) *ProjectUpdateOne {
 	puo.mutation.SetName(s)
@@ -666,6 +659,7 @@ func (puo *ProjectUpdateOne) Save(ctx context.Context) (*Project, error) {
 		err  error
 		node *Project
 	)
+	puo.defaults()
 	if len(puo.hooks) == 0 {
 		node, err = puo.sqlSave(ctx)
 	} else {
@@ -711,6 +705,14 @@ func (puo *ProjectUpdateOne) Exec(ctx context.Context) error {
 func (puo *ProjectUpdateOne) ExecX(ctx context.Context) {
 	if err := puo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (puo *ProjectUpdateOne) defaults() {
+	if _, ok := puo.mutation.UpdatedAt(); !ok {
+		v := project.UpdateDefaultUpdatedAt()
+		puo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -786,10 +788,10 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if puo.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -802,10 +804,10 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if nodes := puo.mutation.RemovedRolesIDs(); len(nodes) > 0 && !puo.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -821,10 +823,10 @@ func (puo *ProjectUpdateOne) sqlSave(ctx context.Context) (_node *Project, err e
 	}
 	if nodes := puo.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

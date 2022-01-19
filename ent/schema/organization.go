@@ -14,9 +14,12 @@ type Organization struct {
 
 // Fields of the Organization.
 func (Organization) Fields() []ent.Field {
-	return append(core.SystemFields, []ent.Field{
+	return []ent.Field{
+		core.IDField,
+		core.CreatedAtField,
+		core.UpdatedAtField,
 		field.String("name"),
-	}...)
+	}
 }
 
 // Edges of the Organization.

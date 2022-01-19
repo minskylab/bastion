@@ -23,5 +23,6 @@ func (Role) Fields() []ent.Field {
 func (Role) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("members", Member.Type).Ref("roles"),
+		edge.From("projects", Project.Type).Ref("roles"),
 	}
 }

@@ -178,6 +178,10 @@ func (tc *TaskCreate) defaults() {
 		v := task.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := tc.mutation.ID(); !ok {
+		v := task.DefaultID()
+		tc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.

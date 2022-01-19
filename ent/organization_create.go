@@ -187,6 +187,10 @@ func (oc *OrganizationCreate) defaults() {
 		v := organization.DefaultUpdatedAt()
 		oc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := oc.mutation.ID(); !ok {
+		v := organization.DefaultID()
+		oc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.

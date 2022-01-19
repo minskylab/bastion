@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 	"github.com/minskylab/bastion/ent/member"
+	"github.com/minskylab/bastion/ent/project"
 	"github.com/minskylab/bastion/ent/role"
 )
 
@@ -75,6 +76,21 @@ func (rc *RoleCreate) AddMembers(m ...*Member) *RoleCreate {
 		ids[i] = m[i].ID
 	}
 	return rc.AddMemberIDs(ids...)
+}
+
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (rc *RoleCreate) AddProjectIDs(ids ...uuid.UUID) *RoleCreate {
+	rc.mutation.AddProjectIDs(ids...)
+	return rc
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (rc *RoleCreate) AddProjects(p ...*Project) *RoleCreate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return rc.AddProjectIDs(ids...)
 }
 
 // Mutation returns the RoleMutation object of the builder.
@@ -156,6 +172,10 @@ func (rc *RoleCreate) defaults() {
 		v := role.DefaultUpdatedAt()
 		rc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := rc.mutation.ID(); !ok {
+		v := role.DefaultID()
+		rc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -236,6 +256,25 @@ func (rc *RoleCreate) createSpec() (*Role, *sqlgraph.CreateSpec) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: member.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.ProjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
 				},
 			},
 		}

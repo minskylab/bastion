@@ -50,14 +50,6 @@ func (ou *OrganizationUpdate) SetUpdatedAt(t time.Time) *OrganizationUpdate {
 	return ou
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (ou *OrganizationUpdate) SetNillableUpdatedAt(t *time.Time) *OrganizationUpdate {
-	if t != nil {
-		ou.SetUpdatedAt(*t)
-	}
-	return ou
-}
-
 // SetName sets the "name" field.
 func (ou *OrganizationUpdate) SetName(s string) *OrganizationUpdate {
 	ou.mutation.SetName(s)
@@ -183,6 +175,7 @@ func (ou *OrganizationUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	ou.defaults()
 	if len(ou.hooks) == 0 {
 		affected, err = ou.sqlSave(ctx)
 	} else {
@@ -228,6 +221,14 @@ func (ou *OrganizationUpdate) Exec(ctx context.Context) error {
 func (ou *OrganizationUpdate) ExecX(ctx context.Context) {
 	if err := ou.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (ou *OrganizationUpdate) defaults() {
+	if _, ok := ou.mutation.UpdatedAt(); !ok {
+		v := organization.UpdateDefaultUpdatedAt()
+		ou.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -471,14 +472,6 @@ func (ouo *OrganizationUpdateOne) SetUpdatedAt(t time.Time) *OrganizationUpdateO
 	return ouo
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (ouo *OrganizationUpdateOne) SetNillableUpdatedAt(t *time.Time) *OrganizationUpdateOne {
-	if t != nil {
-		ouo.SetUpdatedAt(*t)
-	}
-	return ouo
-}
-
 // SetName sets the "name" field.
 func (ouo *OrganizationUpdateOne) SetName(s string) *OrganizationUpdateOne {
 	ouo.mutation.SetName(s)
@@ -611,6 +604,7 @@ func (ouo *OrganizationUpdateOne) Save(ctx context.Context) (*Organization, erro
 		err  error
 		node *Organization
 	)
+	ouo.defaults()
 	if len(ouo.hooks) == 0 {
 		node, err = ouo.sqlSave(ctx)
 	} else {
@@ -656,6 +650,14 @@ func (ouo *OrganizationUpdateOne) Exec(ctx context.Context) error {
 func (ouo *OrganizationUpdateOne) ExecX(ctx context.Context) {
 	if err := ouo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (ouo *OrganizationUpdateOne) defaults() {
+	if _, ok := ouo.mutation.UpdatedAt(); !ok {
+		v := organization.UpdateDefaultUpdatedAt()
+		ouo.mutation.SetUpdatedAt(v)
 	}
 }
 

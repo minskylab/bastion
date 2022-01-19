@@ -209,6 +209,10 @@ func (mc *MemberCreate) defaults() {
 		v := member.DefaultUpdatedAt()
 		mc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := mc.mutation.ID(); !ok {
+		v := member.DefaultID()
+		mc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.

@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/minskylab/bastion/ent/member"
 	"github.com/minskylab/bastion/ent/organization"
 	"github.com/minskylab/bastion/ent/project"
@@ -27,6 +28,12 @@ func init() {
 	memberDescUpdatedAt := memberFields[2].Descriptor()
 	// member.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	member.DefaultUpdatedAt = memberDescUpdatedAt.Default.(func() time.Time)
+	// member.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	member.UpdateDefaultUpdatedAt = memberDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// memberDescID is the schema descriptor for id field.
+	memberDescID := memberFields[0].Descriptor()
+	// member.DefaultID holds the default value on creation for the id field.
+	member.DefaultID = memberDescID.Default.(func() uuid.UUID)
 	organizationFields := schema.Organization{}.Fields()
 	_ = organizationFields
 	// organizationDescCreatedAt is the schema descriptor for createdAt field.
@@ -37,6 +44,12 @@ func init() {
 	organizationDescUpdatedAt := organizationFields[2].Descriptor()
 	// organization.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	organization.DefaultUpdatedAt = organizationDescUpdatedAt.Default.(func() time.Time)
+	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	organization.UpdateDefaultUpdatedAt = organizationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// organizationDescID is the schema descriptor for id field.
+	organizationDescID := organizationFields[0].Descriptor()
+	// organization.DefaultID holds the default value on creation for the id field.
+	organization.DefaultID = organizationDescID.Default.(func() uuid.UUID)
 	projectFields := schema.Project{}.Fields()
 	_ = projectFields
 	// projectDescCreatedAt is the schema descriptor for createdAt field.
@@ -47,10 +60,16 @@ func init() {
 	projectDescUpdatedAt := projectFields[2].Descriptor()
 	// project.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	project.DefaultUpdatedAt = projectDescUpdatedAt.Default.(func() time.Time)
+	// project.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	project.UpdateDefaultUpdatedAt = projectDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// projectDescStartAt is the schema descriptor for startAt field.
 	projectDescStartAt := projectFields[5].Descriptor()
 	// project.DefaultStartAt holds the default value on creation for the startAt field.
 	project.DefaultStartAt = projectDescStartAt.Default.(func() time.Time)
+	// projectDescID is the schema descriptor for id field.
+	projectDescID := projectFields[0].Descriptor()
+	// project.DefaultID holds the default value on creation for the id field.
+	project.DefaultID = projectDescID.Default.(func() uuid.UUID)
 	roleFields := schema.Role{}.Fields()
 	_ = roleFields
 	// roleDescCreatedAt is the schema descriptor for createdAt field.
@@ -61,6 +80,12 @@ func init() {
 	roleDescUpdatedAt := roleFields[2].Descriptor()
 	// role.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	role.DefaultUpdatedAt = roleDescUpdatedAt.Default.(func() time.Time)
+	// role.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	role.UpdateDefaultUpdatedAt = roleDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// roleDescID is the schema descriptor for id field.
+	roleDescID := roleFields[0].Descriptor()
+	// role.DefaultID holds the default value on creation for the id field.
+	role.DefaultID = roleDescID.Default.(func() uuid.UUID)
 	taskFields := schema.Task{}.Fields()
 	_ = taskFields
 	// taskDescCreatedAt is the schema descriptor for createdAt field.
@@ -71,4 +96,10 @@ func init() {
 	taskDescUpdatedAt := taskFields[2].Descriptor()
 	// task.DefaultUpdatedAt holds the default value on creation for the updatedAt field.
 	task.DefaultUpdatedAt = taskDescUpdatedAt.Default.(func() time.Time)
+	// task.UpdateDefaultUpdatedAt holds the default value on update for the updatedAt field.
+	task.UpdateDefaultUpdatedAt = taskDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// taskDescID is the schema descriptor for id field.
+	taskDescID := taskFields[0].Descriptor()
+	// task.DefaultID holds the default value on creation for the id field.
+	task.DefaultID = taskDescID.Default.(func() uuid.UUID)
 }

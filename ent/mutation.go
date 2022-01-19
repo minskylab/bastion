@@ -2278,19 +2278,22 @@ func (m *ProjectMutation) ResetEdge(name string) error {
 // RoleMutation represents an operation that mutates the Role nodes in the graph.
 type RoleMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *uuid.UUID
-	createdAt      *time.Time
-	updatedAt      *time.Time
-	name           *string
-	clearedFields  map[string]struct{}
-	members        map[uuid.UUID]struct{}
-	removedmembers map[uuid.UUID]struct{}
-	clearedmembers bool
-	done           bool
-	oldValue       func(context.Context) (*Role, error)
-	predicates     []predicate.Role
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	createdAt       *time.Time
+	updatedAt       *time.Time
+	name            *string
+	clearedFields   map[string]struct{}
+	members         map[uuid.UUID]struct{}
+	removedmembers  map[uuid.UUID]struct{}
+	clearedmembers  bool
+	projects        map[uuid.UUID]struct{}
+	removedprojects map[uuid.UUID]struct{}
+	clearedprojects bool
+	done            bool
+	oldValue        func(context.Context) (*Role, error)
+	predicates      []predicate.Role
 }
 
 var _ ent.Mutation = (*RoleMutation)(nil)
@@ -2540,6 +2543,60 @@ func (m *RoleMutation) ResetMembers() {
 	m.removedmembers = nil
 }
 
+// AddProjectIDs adds the "projects" edge to the Project entity by ids.
+func (m *RoleMutation) AddProjectIDs(ids ...uuid.UUID) {
+	if m.projects == nil {
+		m.projects = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.projects[ids[i]] = struct{}{}
+	}
+}
+
+// ClearProjects clears the "projects" edge to the Project entity.
+func (m *RoleMutation) ClearProjects() {
+	m.clearedprojects = true
+}
+
+// ProjectsCleared reports if the "projects" edge to the Project entity was cleared.
+func (m *RoleMutation) ProjectsCleared() bool {
+	return m.clearedprojects
+}
+
+// RemoveProjectIDs removes the "projects" edge to the Project entity by IDs.
+func (m *RoleMutation) RemoveProjectIDs(ids ...uuid.UUID) {
+	if m.removedprojects == nil {
+		m.removedprojects = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.projects, ids[i])
+		m.removedprojects[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedProjects returns the removed IDs of the "projects" edge to the Project entity.
+func (m *RoleMutation) RemovedProjectsIDs() (ids []uuid.UUID) {
+	for id := range m.removedprojects {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ProjectsIDs returns the "projects" edge IDs in the mutation.
+func (m *RoleMutation) ProjectsIDs() (ids []uuid.UUID) {
+	for id := range m.projects {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetProjects resets all changes to the "projects" edge.
+func (m *RoleMutation) ResetProjects() {
+	m.projects = nil
+	m.clearedprojects = false
+	m.removedprojects = nil
+}
+
 // Where appends a list predicates to the RoleMutation builder.
 func (m *RoleMutation) Where(ps ...predicate.Role) {
 	m.predicates = append(m.predicates, ps...)
@@ -2692,9 +2749,12 @@ func (m *RoleMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RoleMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.members != nil {
 		edges = append(edges, role.EdgeMembers)
+	}
+	if m.projects != nil {
+		edges = append(edges, role.EdgeProjects)
 	}
 	return edges
 }
@@ -2709,15 +2769,24 @@ func (m *RoleMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case role.EdgeProjects:
+		ids := make([]ent.Value, 0, len(m.projects))
+		for id := range m.projects {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RoleMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedmembers != nil {
 		edges = append(edges, role.EdgeMembers)
+	}
+	if m.removedprojects != nil {
+		edges = append(edges, role.EdgeProjects)
 	}
 	return edges
 }
@@ -2732,15 +2801,24 @@ func (m *RoleMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case role.EdgeProjects:
+		ids := make([]ent.Value, 0, len(m.removedprojects))
+		for id := range m.removedprojects {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RoleMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedmembers {
 		edges = append(edges, role.EdgeMembers)
+	}
+	if m.clearedprojects {
+		edges = append(edges, role.EdgeProjects)
 	}
 	return edges
 }
@@ -2751,6 +2829,8 @@ func (m *RoleMutation) EdgeCleared(name string) bool {
 	switch name {
 	case role.EdgeMembers:
 		return m.clearedmembers
+	case role.EdgeProjects:
+		return m.clearedprojects
 	}
 	return false
 }
@@ -2769,6 +2849,9 @@ func (m *RoleMutation) ResetEdge(name string) error {
 	switch name {
 	case role.EdgeMembers:
 		m.ResetMembers()
+		return nil
+	case role.EdgeProjects:
+		m.ResetProjects()
 		return nil
 	}
 	return fmt.Errorf("unknown Role edge %s", name)

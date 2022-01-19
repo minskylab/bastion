@@ -25,17 +25,18 @@ type Role struct {
 	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoleQuery when eager-loading is set.
-	Edges         RoleEdges `json:"edges"`
-	project_roles *uuid.UUID
+	Edges RoleEdges `json:"edges"`
 }
 
 // RoleEdges holds the relations/edges for other nodes in the graph.
 type RoleEdges struct {
 	// Members holds the value of the members edge.
 	Members []*Member `json:"members,omitempty"`
+	// Projects holds the value of the projects edge.
+	Projects []*Project `json:"projects,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // MembersOrErr returns the Members value or an error if the edge
@@ -45,6 +46,15 @@ func (e RoleEdges) MembersOrErr() ([]*Member, error) {
 		return e.Members, nil
 	}
 	return nil, &NotLoadedError{edge: "members"}
+}
+
+// ProjectsOrErr returns the Projects value or an error if the edge
+// was not loaded in eager-loading.
+func (e RoleEdges) ProjectsOrErr() ([]*Project, error) {
+	if e.loadedTypes[1] {
+		return e.Projects, nil
+	}
+	return nil, &NotLoadedError{edge: "projects"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -58,8 +68,6 @@ func (*Role) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullTime)
 		case role.FieldID:
 			values[i] = new(uuid.UUID)
-		case role.ForeignKeys[0]: // project_roles
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Role", columns[i])
 		}
@@ -99,13 +107,6 @@ func (r *Role) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				r.Name = value.String
 			}
-		case role.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field project_roles", values[i])
-			} else if value.Valid {
-				r.project_roles = new(uuid.UUID)
-				*r.project_roles = *value.S.(*uuid.UUID)
-			}
 		}
 	}
 	return nil
@@ -114,6 +115,11 @@ func (r *Role) assignValues(columns []string, values []interface{}) error {
 // QueryMembers queries the "members" edge of the Role entity.
 func (r *Role) QueryMembers() *MemberQuery {
 	return (&RoleClient{config: r.config}).QueryMembers(r)
+}
+
+// QueryProjects queries the "projects" edge of the Role entity.
+func (r *Role) QueryProjects() *ProjectQuery {
+	return (&RoleClient{config: r.config}).QueryProjects(r)
 }
 
 // Update returns a builder for updating this Role.

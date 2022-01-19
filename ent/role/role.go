@@ -4,6 +4,8 @@ package role
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -19,6 +21,8 @@ const (
 	FieldName = "name"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
+	// EdgeProjects holds the string denoting the projects edge name in mutations.
+	EdgeProjects = "projects"
 	// Table holds the table name of the role in the database.
 	Table = "roles"
 	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
@@ -26,6 +30,11 @@ const (
 	// MembersInverseTable is the table name for the Member entity.
 	// It exists in this package in order to avoid circular dependency with the "member" package.
 	MembersInverseTable = "members"
+	// ProjectsTable is the table that holds the projects relation/edge. The primary key declared below.
+	ProjectsTable = "project_roles"
+	// ProjectsInverseTable is the table name for the Project entity.
+	// It exists in this package in order to avoid circular dependency with the "project" package.
+	ProjectsInverseTable = "projects"
 )
 
 // Columns holds all SQL columns for role fields.
@@ -36,27 +45,19 @@ var Columns = []string{
 	FieldName,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the "roles"
-// table and are not defined as standalone fields in the schema.
-var ForeignKeys = []string{
-	"project_roles",
-}
-
 var (
 	// MembersPrimaryKey and MembersColumn2 are the table columns denoting the
 	// primary key for the members relation (M2M).
 	MembersPrimaryKey = []string{"member_id", "role_id"}
+	// ProjectsPrimaryKey and ProjectsColumn2 are the table columns denoting the
+	// primary key for the projects relation (M2M).
+	ProjectsPrimaryKey = []string{"project_id", "role_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
-			return true
-		}
-	}
-	for i := range ForeignKeys {
-		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -68,4 +69,8 @@ var (
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.
 	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updatedAt" field.
+	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
 )

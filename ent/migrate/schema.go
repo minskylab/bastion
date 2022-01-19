@@ -10,9 +10,9 @@ import (
 var (
 	// MembersColumns holds the columns for the "members" table.
 	MembersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "id", Type: field.TypeUUID, Default: "gen_random_uuid()"},
+		{Name: "created_at", Type: field.TypeTime, Default: "now()"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "now()"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
 	}
@@ -24,9 +24,9 @@ var (
 	}
 	// OrganizationsColumns holds the columns for the "organizations" table.
 	OrganizationsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "id", Type: field.TypeUUID, Default: "gen_random_uuid()"},
+		{Name: "created_at", Type: field.TypeTime, Default: "now()"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "now()"},
 		{Name: "name", Type: field.TypeString},
 	}
 	// OrganizationsTable holds the schema information for the "organizations" table.
@@ -37,9 +37,9 @@ var (
 	}
 	// ProjectsColumns holds the columns for the "projects" table.
 	ProjectsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "id", Type: field.TypeUUID, Default: "gen_random_uuid()"},
+		{Name: "created_at", Type: field.TypeTime, Default: "now()"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "now()"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString},
 		{Name: "start_at", Type: field.TypeTime},
@@ -52,31 +52,22 @@ var (
 	}
 	// RolesColumns holds the columns for the "roles" table.
 	RolesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "id", Type: field.TypeUUID, Default: "gen_random_uuid()"},
+		{Name: "created_at", Type: field.TypeTime, Default: "now()"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "now()"},
 		{Name: "name", Type: field.TypeString},
-		{Name: "project_roles", Type: field.TypeUUID, Nullable: true},
 	}
 	// RolesTable holds the schema information for the "roles" table.
 	RolesTable = &schema.Table{
 		Name:       "roles",
 		Columns:    RolesColumns,
 		PrimaryKey: []*schema.Column{RolesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "roles_projects_roles",
-				Columns:    []*schema.Column{RolesColumns[4]},
-				RefColumns: []*schema.Column{ProjectsColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-		},
 	}
 	// TasksColumns holds the columns for the "tasks" table.
 	TasksColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "id", Type: field.TypeUUID, Default: "gen_random_uuid()"},
+		{Name: "created_at", Type: field.TypeTime, Default: "now()"},
+		{Name: "updated_at", Type: field.TypeTime, Default: "now()"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "url", Type: field.TypeString},
 	}
@@ -186,6 +177,31 @@ var (
 			},
 		},
 	}
+	// ProjectRolesColumns holds the columns for the "project_roles" table.
+	ProjectRolesColumns = []*schema.Column{
+		{Name: "project_id", Type: field.TypeUUID},
+		{Name: "role_id", Type: field.TypeUUID},
+	}
+	// ProjectRolesTable holds the schema information for the "project_roles" table.
+	ProjectRolesTable = &schema.Table{
+		Name:       "project_roles",
+		Columns:    ProjectRolesColumns,
+		PrimaryKey: []*schema.Column{ProjectRolesColumns[0], ProjectRolesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "project_roles_project_id",
+				Columns:    []*schema.Column{ProjectRolesColumns[0]},
+				RefColumns: []*schema.Column{ProjectsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "project_roles_role_id",
+				Columns:    []*schema.Column{ProjectRolesColumns[1]},
+				RefColumns: []*schema.Column{RolesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// ProjectTasksColumns holds the columns for the "project_tasks" table.
 	ProjectTasksColumns = []*schema.Column{
 		{Name: "project_id", Type: field.TypeUUID},
@@ -247,13 +263,13 @@ var (
 		OrganizationProjectsTable,
 		OrganizationDevelopersTable,
 		OrganizationManagersTable,
+		ProjectRolesTable,
 		ProjectTasksTable,
 		TaskAssigneesTable,
 	}
 )
 
 func init() {
-	RolesTable.ForeignKeys[0].RefTable = ProjectsTable
 	MemberRolesTable.ForeignKeys[0].RefTable = MembersTable
 	MemberRolesTable.ForeignKeys[1].RefTable = RolesTable
 	OrganizationProjectsTable.ForeignKeys[0].RefTable = OrganizationsTable
@@ -262,6 +278,8 @@ func init() {
 	OrganizationDevelopersTable.ForeignKeys[1].RefTable = MembersTable
 	OrganizationManagersTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationManagersTable.ForeignKeys[1].RefTable = MembersTable
+	ProjectRolesTable.ForeignKeys[0].RefTable = ProjectsTable
+	ProjectRolesTable.ForeignKeys[1].RefTable = RolesTable
 	ProjectTasksTable.ForeignKeys[0].RefTable = ProjectsTable
 	ProjectTasksTable.ForeignKeys[1].RefTable = TasksTable
 	TaskAssigneesTable.ForeignKeys[0].RefTable = TasksTable

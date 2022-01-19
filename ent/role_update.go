@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minskylab/bastion/ent/member"
 	"github.com/minskylab/bastion/ent/predicate"
+	"github.com/minskylab/bastion/ent/project"
 	"github.com/minskylab/bastion/ent/role"
 )
 
@@ -49,14 +50,6 @@ func (ru *RoleUpdate) SetUpdatedAt(t time.Time) *RoleUpdate {
 	return ru
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (ru *RoleUpdate) SetNillableUpdatedAt(t *time.Time) *RoleUpdate {
-	if t != nil {
-		ru.SetUpdatedAt(*t)
-	}
-	return ru
-}
-
 // SetName sets the "name" field.
 func (ru *RoleUpdate) SetName(s string) *RoleUpdate {
 	ru.mutation.SetName(s)
@@ -76,6 +69,21 @@ func (ru *RoleUpdate) AddMembers(m ...*Member) *RoleUpdate {
 		ids[i] = m[i].ID
 	}
 	return ru.AddMemberIDs(ids...)
+}
+
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (ru *RoleUpdate) AddProjectIDs(ids ...uuid.UUID) *RoleUpdate {
+	ru.mutation.AddProjectIDs(ids...)
+	return ru
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (ru *RoleUpdate) AddProjects(p ...*Project) *RoleUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ru.AddProjectIDs(ids...)
 }
 
 // Mutation returns the RoleMutation object of the builder.
@@ -104,12 +112,34 @@ func (ru *RoleUpdate) RemoveMembers(m ...*Member) *RoleUpdate {
 	return ru.RemoveMemberIDs(ids...)
 }
 
+// ClearProjects clears all "projects" edges to the Project entity.
+func (ru *RoleUpdate) ClearProjects() *RoleUpdate {
+	ru.mutation.ClearProjects()
+	return ru
+}
+
+// RemoveProjectIDs removes the "projects" edge to Project entities by IDs.
+func (ru *RoleUpdate) RemoveProjectIDs(ids ...uuid.UUID) *RoleUpdate {
+	ru.mutation.RemoveProjectIDs(ids...)
+	return ru
+}
+
+// RemoveProjects removes "projects" edges to Project entities.
+func (ru *RoleUpdate) RemoveProjects(p ...*Project) *RoleUpdate {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ru.RemoveProjectIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (ru *RoleUpdate) Save(ctx context.Context) (int, error) {
 	var (
 		err      error
 		affected int
 	)
+	ru.defaults()
 	if len(ru.hooks) == 0 {
 		affected, err = ru.sqlSave(ctx)
 	} else {
@@ -155,6 +185,14 @@ func (ru *RoleUpdate) Exec(ctx context.Context) error {
 func (ru *RoleUpdate) ExecX(ctx context.Context) {
 	if err := ru.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (ru *RoleUpdate) defaults() {
+	if _, ok := ru.mutation.UpdatedAt(); !ok {
+		v := role.UpdateDefaultUpdatedAt()
+		ru.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -251,6 +289,60 @@ func (ru *RoleUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ru.mutation.ProjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedProjectsIDs(); len(nodes) > 0 && !ru.mutation.ProjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.ProjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{role.Label}
@@ -290,14 +382,6 @@ func (ruo *RoleUpdateOne) SetUpdatedAt(t time.Time) *RoleUpdateOne {
 	return ruo
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (ruo *RoleUpdateOne) SetNillableUpdatedAt(t *time.Time) *RoleUpdateOne {
-	if t != nil {
-		ruo.SetUpdatedAt(*t)
-	}
-	return ruo
-}
-
 // SetName sets the "name" field.
 func (ruo *RoleUpdateOne) SetName(s string) *RoleUpdateOne {
 	ruo.mutation.SetName(s)
@@ -317,6 +401,21 @@ func (ruo *RoleUpdateOne) AddMembers(m ...*Member) *RoleUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return ruo.AddMemberIDs(ids...)
+}
+
+// AddProjectIDs adds the "projects" edge to the Project entity by IDs.
+func (ruo *RoleUpdateOne) AddProjectIDs(ids ...uuid.UUID) *RoleUpdateOne {
+	ruo.mutation.AddProjectIDs(ids...)
+	return ruo
+}
+
+// AddProjects adds the "projects" edges to the Project entity.
+func (ruo *RoleUpdateOne) AddProjects(p ...*Project) *RoleUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ruo.AddProjectIDs(ids...)
 }
 
 // Mutation returns the RoleMutation object of the builder.
@@ -345,6 +444,27 @@ func (ruo *RoleUpdateOne) RemoveMembers(m ...*Member) *RoleUpdateOne {
 	return ruo.RemoveMemberIDs(ids...)
 }
 
+// ClearProjects clears all "projects" edges to the Project entity.
+func (ruo *RoleUpdateOne) ClearProjects() *RoleUpdateOne {
+	ruo.mutation.ClearProjects()
+	return ruo
+}
+
+// RemoveProjectIDs removes the "projects" edge to Project entities by IDs.
+func (ruo *RoleUpdateOne) RemoveProjectIDs(ids ...uuid.UUID) *RoleUpdateOne {
+	ruo.mutation.RemoveProjectIDs(ids...)
+	return ruo
+}
+
+// RemoveProjects removes "projects" edges to Project entities.
+func (ruo *RoleUpdateOne) RemoveProjects(p ...*Project) *RoleUpdateOne {
+	ids := make([]uuid.UUID, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ruo.RemoveProjectIDs(ids...)
+}
+
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
 func (ruo *RoleUpdateOne) Select(field string, fields ...string) *RoleUpdateOne {
@@ -358,6 +478,7 @@ func (ruo *RoleUpdateOne) Save(ctx context.Context) (*Role, error) {
 		err  error
 		node *Role
 	)
+	ruo.defaults()
 	if len(ruo.hooks) == 0 {
 		node, err = ruo.sqlSave(ctx)
 	} else {
@@ -403,6 +524,14 @@ func (ruo *RoleUpdateOne) Exec(ctx context.Context) error {
 func (ruo *RoleUpdateOne) ExecX(ctx context.Context) {
 	if err := ruo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (ruo *RoleUpdateOne) defaults() {
+	if _, ok := ruo.mutation.UpdatedAt(); !ok {
+		v := role.UpdateDefaultUpdatedAt()
+		ruo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -508,6 +637,60 @@ func (ruo *RoleUpdateOne) sqlSave(ctx context.Context) (_node *Role, err error) 
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeUUID,
 					Column: member.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.ProjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedProjectsIDs(); len(nodes) > 0 && !ruo.mutation.ProjectsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.ProjectsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   role.ProjectsTable,
+			Columns: role.ProjectsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeUUID,
+					Column: project.FieldID,
 				},
 			},
 		}

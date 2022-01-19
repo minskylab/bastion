@@ -51,14 +51,6 @@ func (mu *MemberUpdate) SetUpdatedAt(t time.Time) *MemberUpdate {
 	return mu
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableUpdatedAt(t *time.Time) *MemberUpdate {
-	if t != nil {
-		mu.SetUpdatedAt(*t)
-	}
-	return mu
-}
-
 // SetName sets the "name" field.
 func (mu *MemberUpdate) SetName(s string) *MemberUpdate {
 	mu.mutation.SetName(s)
@@ -226,6 +218,7 @@ func (mu *MemberUpdate) Save(ctx context.Context) (int, error) {
 		err      error
 		affected int
 	)
+	mu.defaults()
 	if len(mu.hooks) == 0 {
 		affected, err = mu.sqlSave(ctx)
 	} else {
@@ -271,6 +264,14 @@ func (mu *MemberUpdate) Exec(ctx context.Context) error {
 func (mu *MemberUpdate) ExecX(ctx context.Context) {
 	if err := mu.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (mu *MemberUpdate) defaults() {
+	if _, ok := mu.mutation.UpdatedAt(); !ok {
+		v := member.UpdateDefaultUpdatedAt()
+		mu.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -575,14 +576,6 @@ func (muo *MemberUpdateOne) SetUpdatedAt(t time.Time) *MemberUpdateOne {
 	return muo
 }
 
-// SetNillableUpdatedAt sets the "updatedAt" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableUpdatedAt(t *time.Time) *MemberUpdateOne {
-	if t != nil {
-		muo.SetUpdatedAt(*t)
-	}
-	return muo
-}
-
 // SetName sets the "name" field.
 func (muo *MemberUpdateOne) SetName(s string) *MemberUpdateOne {
 	muo.mutation.SetName(s)
@@ -757,6 +750,7 @@ func (muo *MemberUpdateOne) Save(ctx context.Context) (*Member, error) {
 		err  error
 		node *Member
 	)
+	muo.defaults()
 	if len(muo.hooks) == 0 {
 		node, err = muo.sqlSave(ctx)
 	} else {
@@ -802,6 +796,14 @@ func (muo *MemberUpdateOne) Exec(ctx context.Context) error {
 func (muo *MemberUpdateOne) ExecX(ctx context.Context) {
 	if err := muo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (muo *MemberUpdateOne) defaults() {
+	if _, ok := muo.mutation.UpdatedAt(); !ok {
+		v := member.UpdateDefaultUpdatedAt()
+		muo.mutation.SetUpdatedAt(v)
 	}
 }
 

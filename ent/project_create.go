@@ -212,6 +212,10 @@ func (pc *ProjectCreate) defaults() {
 		v := project.DefaultStartAt()
 		pc.mutation.SetStartAt(v)
 	}
+	if _, ok := pc.mutation.ID(); !ok {
+		v := project.DefaultID()
+		pc.mutation.SetID(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -305,10 +309,10 @@ func (pc *ProjectCreate) createSpec() (*Project, *sqlgraph.CreateSpec) {
 	}
 	if nodes := pc.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.M2M,
 			Inverse: false,
 			Table:   project.RolesTable,
-			Columns: []string{project.RolesColumn},
+			Columns: project.RolesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

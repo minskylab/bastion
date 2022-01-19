@@ -4,6 +4,8 @@ package project
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -29,13 +31,11 @@ const (
 	EdgeOrganizations = "organizations"
 	// Table holds the table name of the project in the database.
 	Table = "projects"
-	// RolesTable is the table that holds the roles relation/edge.
-	RolesTable = "roles"
+	// RolesTable is the table that holds the roles relation/edge. The primary key declared below.
+	RolesTable = "project_roles"
 	// RolesInverseTable is the table name for the Role entity.
 	// It exists in this package in order to avoid circular dependency with the "role" package.
 	RolesInverseTable = "roles"
-	// RolesColumn is the table column denoting the roles relation/edge.
-	RolesColumn = "project_roles"
 	// TasksTable is the table that holds the tasks relation/edge. The primary key declared below.
 	TasksTable = "project_tasks"
 	// TasksInverseTable is the table name for the Task entity.
@@ -59,6 +59,9 @@ var Columns = []string{
 }
 
 var (
+	// RolesPrimaryKey and RolesColumn2 are the table columns denoting the
+	// primary key for the roles relation (M2M).
+	RolesPrimaryKey = []string{"project_id", "role_id"}
 	// TasksPrimaryKey and TasksColumn2 are the table columns denoting the
 	// primary key for the tasks relation (M2M).
 	TasksPrimaryKey = []string{"project_id", "task_id"}
@@ -82,6 +85,10 @@ var (
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updatedAt" field.
 	DefaultUpdatedAt func() time.Time
+	// UpdateDefaultUpdatedAt holds the default value on update for the "updatedAt" field.
+	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultStartAt holds the default value on creation for the "startAt" field.
 	DefaultStartAt func() time.Time
+	// DefaultID holds the default value on creation for the "id" field.
+	DefaultID func() uuid.UUID
 )

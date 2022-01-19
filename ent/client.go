@@ -536,7 +536,7 @@ func (c *ProjectClient) QueryRoles(pr *Project) *RoleQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(project.Table, project.FieldID, id),
 			sqlgraph.To(role.Table, role.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, project.RolesTable, project.RolesColumn),
+			sqlgraph.Edge(sqlgraph.M2M, false, project.RolesTable, project.RolesPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
 		return fromV, nil
@@ -675,6 +675,22 @@ func (c *RoleClient) QueryMembers(r *Role) *MemberQuery {
 			sqlgraph.From(role.Table, role.FieldID, id),
 			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, role.MembersTable, role.MembersPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryProjects queries the projects edge of a Role.
+func (c *RoleClient) QueryProjects(r *Role) *ProjectQuery {
+	query := &ProjectQuery{config: c.config}
+	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(role.Table, role.FieldID, id),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, role.ProjectsTable, role.ProjectsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil

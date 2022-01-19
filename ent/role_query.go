@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/minskylab/bastion/ent/member"
 	"github.com/minskylab/bastion/ent/predicate"
+	"github.com/minskylab/bastion/ent/project"
 	"github.com/minskylab/bastion/ent/role"
 )
 
@@ -28,8 +29,8 @@ type RoleQuery struct {
 	fields     []string
 	predicates []predicate.Role
 	// eager-loading edges.
-	withMembers *MemberQuery
-	withFKs     bool
+	withMembers  *MemberQuery
+	withProjects *ProjectQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -81,6 +82,28 @@ func (rq *RoleQuery) QueryMembers() *MemberQuery {
 			sqlgraph.From(role.Table, role.FieldID, selector),
 			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, role.MembersTable, role.MembersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProjects chains the current query on the "projects" edge.
+func (rq *RoleQuery) QueryProjects() *ProjectQuery {
+	query := &ProjectQuery{config: rq.config}
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(role.Table, role.FieldID, selector),
+			sqlgraph.To(project.Table, project.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, role.ProjectsTable, role.ProjectsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -264,12 +287,13 @@ func (rq *RoleQuery) Clone() *RoleQuery {
 		return nil
 	}
 	return &RoleQuery{
-		config:      rq.config,
-		limit:       rq.limit,
-		offset:      rq.offset,
-		order:       append([]OrderFunc{}, rq.order...),
-		predicates:  append([]predicate.Role{}, rq.predicates...),
-		withMembers: rq.withMembers.Clone(),
+		config:       rq.config,
+		limit:        rq.limit,
+		offset:       rq.offset,
+		order:        append([]OrderFunc{}, rq.order...),
+		predicates:   append([]predicate.Role{}, rq.predicates...),
+		withMembers:  rq.withMembers.Clone(),
+		withProjects: rq.withProjects.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -284,6 +308,17 @@ func (rq *RoleQuery) WithMembers(opts ...func(*MemberQuery)) *RoleQuery {
 		opt(query)
 	}
 	rq.withMembers = query
+	return rq
+}
+
+// WithProjects tells the query-builder to eager-load the nodes that are connected to
+// the "projects" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RoleQuery) WithProjects(opts ...func(*ProjectQuery)) *RoleQuery {
+	query := &ProjectQuery{config: rq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withProjects = query
 	return rq
 }
 
@@ -351,15 +386,12 @@ func (rq *RoleQuery) prepareQuery(ctx context.Context) error {
 func (rq *RoleQuery) sqlAll(ctx context.Context) ([]*Role, error) {
 	var (
 		nodes       = []*Role{}
-		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			rq.withMembers != nil,
+			rq.withProjects != nil,
 		}
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, role.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Role{config: rq.config}
 		nodes = append(nodes, node)
@@ -441,6 +473,71 @@ func (rq *RoleQuery) sqlAll(ctx context.Context) ([]*Role, error) {
 			}
 			for i := range nodes {
 				nodes[i].Edges.Members = append(nodes[i].Edges.Members, n)
+			}
+		}
+	}
+
+	if query := rq.withProjects; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[uuid.UUID]*Role, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+			node.Edges.Projects = []*Project{}
+		}
+		var (
+			edgeids []uuid.UUID
+			edges   = make(map[uuid.UUID][]*Role)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   role.ProjectsTable,
+				Columns: role.ProjectsPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(role.ProjectsPrimaryKey[1], fks...))
+			},
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*uuid.UUID)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*uuid.UUID)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := *eout
+				inValue := *ein
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, rq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "projects": %w`, err)
+		}
+		query.Where(project.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "projects" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Projects = append(nodes[i].Edges.Projects, n)
 			}
 		}
 	}
