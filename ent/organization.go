@@ -32,13 +32,11 @@ type Organization struct {
 type OrganizationEdges struct {
 	// Projects holds the value of the projects edge.
 	Projects []*Project `json:"projects,omitempty"`
-	// Developers holds the value of the developers edge.
-	Developers []*Member `json:"developers,omitempty"`
-	// Managers holds the value of the managers edge.
-	Managers []*Member `json:"managers,omitempty"`
+	// Members holds the value of the members edge.
+	Members []*Member `json:"members,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // ProjectsOrErr returns the Projects value or an error if the edge
@@ -50,22 +48,13 @@ func (e OrganizationEdges) ProjectsOrErr() ([]*Project, error) {
 	return nil, &NotLoadedError{edge: "projects"}
 }
 
-// DevelopersOrErr returns the Developers value or an error if the edge
+// MembersOrErr returns the Members value or an error if the edge
 // was not loaded in eager-loading.
-func (e OrganizationEdges) DevelopersOrErr() ([]*Member, error) {
+func (e OrganizationEdges) MembersOrErr() ([]*Member, error) {
 	if e.loadedTypes[1] {
-		return e.Developers, nil
+		return e.Members, nil
 	}
-	return nil, &NotLoadedError{edge: "developers"}
-}
-
-// ManagersOrErr returns the Managers value or an error if the edge
-// was not loaded in eager-loading.
-func (e OrganizationEdges) ManagersOrErr() ([]*Member, error) {
-	if e.loadedTypes[2] {
-		return e.Managers, nil
-	}
-	return nil, &NotLoadedError{edge: "managers"}
+	return nil, &NotLoadedError{edge: "members"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -128,14 +117,9 @@ func (o *Organization) QueryProjects() *ProjectQuery {
 	return (&OrganizationClient{config: o.config}).QueryProjects(o)
 }
 
-// QueryDevelopers queries the "developers" edge of the Organization entity.
-func (o *Organization) QueryDevelopers() *MemberQuery {
-	return (&OrganizationClient{config: o.config}).QueryDevelopers(o)
-}
-
-// QueryManagers queries the "managers" edge of the Organization entity.
-func (o *Organization) QueryManagers() *MemberQuery {
-	return (&OrganizationClient{config: o.config}).QueryManagers(o)
+// QueryMembers queries the "members" edge of the Organization entity.
+func (o *Organization) QueryMembers() *MemberQuery {
+	return (&OrganizationClient{config: o.config}).QueryMembers(o)
 }
 
 // Update returns a builder for updating this Organization.

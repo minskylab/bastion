@@ -30,10 +30,9 @@ type MemberQuery struct {
 	fields     []string
 	predicates []predicate.Member
 	// eager-loading edges.
-	withRoles       *RoleQuery
-	withDeveloperOf *OrganizationQuery
-	withManagerOf   *OrganizationQuery
-	withTasks       *TaskQuery
+	withRoles         *RoleQuery
+	withOrganizations *OrganizationQuery
+	withTasks         *TaskQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -92,8 +91,8 @@ func (mq *MemberQuery) QueryRoles() *RoleQuery {
 	return query
 }
 
-// QueryDeveloperOf chains the current query on the "developerOf" edge.
-func (mq *MemberQuery) QueryDeveloperOf() *OrganizationQuery {
+// QueryOrganizations chains the current query on the "organizations" edge.
+func (mq *MemberQuery) QueryOrganizations() *OrganizationQuery {
 	query := &OrganizationQuery{config: mq.config}
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := mq.prepareQuery(ctx); err != nil {
@@ -106,29 +105,7 @@ func (mq *MemberQuery) QueryDeveloperOf() *OrganizationQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(member.Table, member.FieldID, selector),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, member.DeveloperOfTable, member.DeveloperOfPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryManagerOf chains the current query on the "managerOf" edge.
-func (mq *MemberQuery) QueryManagerOf() *OrganizationQuery {
-	query := &OrganizationQuery{config: mq.config}
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := mq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := mq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(member.Table, member.FieldID, selector),
-			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, member.ManagerOfTable, member.ManagerOfPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, true, member.OrganizationsTable, member.OrganizationsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -334,15 +311,14 @@ func (mq *MemberQuery) Clone() *MemberQuery {
 		return nil
 	}
 	return &MemberQuery{
-		config:          mq.config,
-		limit:           mq.limit,
-		offset:          mq.offset,
-		order:           append([]OrderFunc{}, mq.order...),
-		predicates:      append([]predicate.Member{}, mq.predicates...),
-		withRoles:       mq.withRoles.Clone(),
-		withDeveloperOf: mq.withDeveloperOf.Clone(),
-		withManagerOf:   mq.withManagerOf.Clone(),
-		withTasks:       mq.withTasks.Clone(),
+		config:            mq.config,
+		limit:             mq.limit,
+		offset:            mq.offset,
+		order:             append([]OrderFunc{}, mq.order...),
+		predicates:        append([]predicate.Member{}, mq.predicates...),
+		withRoles:         mq.withRoles.Clone(),
+		withOrganizations: mq.withOrganizations.Clone(),
+		withTasks:         mq.withTasks.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -360,25 +336,14 @@ func (mq *MemberQuery) WithRoles(opts ...func(*RoleQuery)) *MemberQuery {
 	return mq
 }
 
-// WithDeveloperOf tells the query-builder to eager-load the nodes that are connected to
-// the "developerOf" edge. The optional arguments are used to configure the query builder of the edge.
-func (mq *MemberQuery) WithDeveloperOf(opts ...func(*OrganizationQuery)) *MemberQuery {
+// WithOrganizations tells the query-builder to eager-load the nodes that are connected to
+// the "organizations" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MemberQuery) WithOrganizations(opts ...func(*OrganizationQuery)) *MemberQuery {
 	query := &OrganizationQuery{config: mq.config}
 	for _, opt := range opts {
 		opt(query)
 	}
-	mq.withDeveloperOf = query
-	return mq
-}
-
-// WithManagerOf tells the query-builder to eager-load the nodes that are connected to
-// the "managerOf" edge. The optional arguments are used to configure the query builder of the edge.
-func (mq *MemberQuery) WithManagerOf(opts ...func(*OrganizationQuery)) *MemberQuery {
-	query := &OrganizationQuery{config: mq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	mq.withManagerOf = query
+	mq.withOrganizations = query
 	return mq
 }
 
@@ -458,10 +423,9 @@ func (mq *MemberQuery) sqlAll(ctx context.Context) ([]*Member, error) {
 	var (
 		nodes       = []*Member{}
 		_spec       = mq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [3]bool{
 			mq.withRoles != nil,
-			mq.withDeveloperOf != nil,
-			mq.withManagerOf != nil,
+			mq.withOrganizations != nil,
 			mq.withTasks != nil,
 		}
 	)
@@ -550,13 +514,13 @@ func (mq *MemberQuery) sqlAll(ctx context.Context) ([]*Member, error) {
 		}
 	}
 
-	if query := mq.withDeveloperOf; query != nil {
+	if query := mq.withOrganizations; query != nil {
 		fks := make([]driver.Value, 0, len(nodes))
 		ids := make(map[uuid.UUID]*Member, len(nodes))
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
-			node.Edges.DeveloperOf = []*Organization{}
+			node.Edges.Organizations = []*Organization{}
 		}
 		var (
 			edgeids []uuid.UUID
@@ -565,11 +529,11 @@ func (mq *MemberQuery) sqlAll(ctx context.Context) ([]*Member, error) {
 		_spec := &sqlgraph.EdgeQuerySpec{
 			Edge: &sqlgraph.EdgeSpec{
 				Inverse: true,
-				Table:   member.DeveloperOfTable,
-				Columns: member.DeveloperOfPrimaryKey,
+				Table:   member.OrganizationsTable,
+				Columns: member.OrganizationsPrimaryKey,
 			},
 			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(member.DeveloperOfPrimaryKey[1], fks...))
+				s.Where(sql.InValues(member.OrganizationsPrimaryKey[1], fks...))
 			},
 			ScanValues: func() [2]interface{} {
 				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
@@ -597,7 +561,7 @@ func (mq *MemberQuery) sqlAll(ctx context.Context) ([]*Member, error) {
 			},
 		}
 		if err := sqlgraph.QueryEdges(ctx, mq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "developerOf": %w`, err)
+			return nil, fmt.Errorf(`query edges "organizations": %w`, err)
 		}
 		query.Where(organization.IDIn(edgeids...))
 		neighbors, err := query.All(ctx)
@@ -607,75 +571,10 @@ func (mq *MemberQuery) sqlAll(ctx context.Context) ([]*Member, error) {
 		for _, n := range neighbors {
 			nodes, ok := edges[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected "developerOf" node returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected "organizations" node returned %v`, n.ID)
 			}
 			for i := range nodes {
-				nodes[i].Edges.DeveloperOf = append(nodes[i].Edges.DeveloperOf, n)
-			}
-		}
-	}
-
-	if query := mq.withManagerOf; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		ids := make(map[uuid.UUID]*Member, len(nodes))
-		for _, node := range nodes {
-			ids[node.ID] = node
-			fks = append(fks, node.ID)
-			node.Edges.ManagerOf = []*Organization{}
-		}
-		var (
-			edgeids []uuid.UUID
-			edges   = make(map[uuid.UUID][]*Member)
-		)
-		_spec := &sqlgraph.EdgeQuerySpec{
-			Edge: &sqlgraph.EdgeSpec{
-				Inverse: true,
-				Table:   member.ManagerOfTable,
-				Columns: member.ManagerOfPrimaryKey,
-			},
-			Predicate: func(s *sql.Selector) {
-				s.Where(sql.InValues(member.ManagerOfPrimaryKey[1], fks...))
-			},
-			ScanValues: func() [2]interface{} {
-				return [2]interface{}{new(uuid.UUID), new(uuid.UUID)}
-			},
-			Assign: func(out, in interface{}) error {
-				eout, ok := out.(*uuid.UUID)
-				if !ok || eout == nil {
-					return fmt.Errorf("unexpected id value for edge-out")
-				}
-				ein, ok := in.(*uuid.UUID)
-				if !ok || ein == nil {
-					return fmt.Errorf("unexpected id value for edge-in")
-				}
-				outValue := *eout
-				inValue := *ein
-				node, ok := ids[outValue]
-				if !ok {
-					return fmt.Errorf("unexpected node id in edges: %v", outValue)
-				}
-				if _, ok := edges[inValue]; !ok {
-					edgeids = append(edgeids, inValue)
-				}
-				edges[inValue] = append(edges[inValue], node)
-				return nil
-			},
-		}
-		if err := sqlgraph.QueryEdges(ctx, mq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "managerOf": %w`, err)
-		}
-		query.Where(organization.IDIn(edgeids...))
-		neighbors, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range neighbors {
-			nodes, ok := edges[n.ID]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected "managerOf" node returned %v`, n.ID)
-			}
-			for i := range nodes {
-				nodes[i].Edges.ManagerOf = append(nodes[i].Edges.ManagerOf, n)
+				nodes[i].Edges.Organizations = append(nodes[i].Edges.Organizations, n)
 			}
 		}
 	}

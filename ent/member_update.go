@@ -63,6 +63,12 @@ func (mu *MemberUpdate) SetEmail(s string) *MemberUpdate {
 	return mu
 }
 
+// SetAuthID sets the "authID" field.
+func (mu *MemberUpdate) SetAuthID(u uuid.UUID) *MemberUpdate {
+	mu.mutation.SetAuthID(u)
+	return mu
+}
+
 // AddRoleIDs adds the "roles" edge to the Role entity by IDs.
 func (mu *MemberUpdate) AddRoleIDs(ids ...uuid.UUID) *MemberUpdate {
 	mu.mutation.AddRoleIDs(ids...)
@@ -78,34 +84,19 @@ func (mu *MemberUpdate) AddRoles(r ...*Role) *MemberUpdate {
 	return mu.AddRoleIDs(ids...)
 }
 
-// AddDeveloperOfIDs adds the "developerOf" edge to the Organization entity by IDs.
-func (mu *MemberUpdate) AddDeveloperOfIDs(ids ...uuid.UUID) *MemberUpdate {
-	mu.mutation.AddDeveloperOfIDs(ids...)
+// AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
+func (mu *MemberUpdate) AddOrganizationIDs(ids ...uuid.UUID) *MemberUpdate {
+	mu.mutation.AddOrganizationIDs(ids...)
 	return mu
 }
 
-// AddDeveloperOf adds the "developerOf" edges to the Organization entity.
-func (mu *MemberUpdate) AddDeveloperOf(o ...*Organization) *MemberUpdate {
+// AddOrganizations adds the "organizations" edges to the Organization entity.
+func (mu *MemberUpdate) AddOrganizations(o ...*Organization) *MemberUpdate {
 	ids := make([]uuid.UUID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
-	return mu.AddDeveloperOfIDs(ids...)
-}
-
-// AddManagerOfIDs adds the "managerOf" edge to the Organization entity by IDs.
-func (mu *MemberUpdate) AddManagerOfIDs(ids ...uuid.UUID) *MemberUpdate {
-	mu.mutation.AddManagerOfIDs(ids...)
-	return mu
-}
-
-// AddManagerOf adds the "managerOf" edges to the Organization entity.
-func (mu *MemberUpdate) AddManagerOf(o ...*Organization) *MemberUpdate {
-	ids := make([]uuid.UUID, len(o))
-	for i := range o {
-		ids[i] = o[i].ID
-	}
-	return mu.AddManagerOfIDs(ids...)
+	return mu.AddOrganizationIDs(ids...)
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
@@ -149,46 +140,25 @@ func (mu *MemberUpdate) RemoveRoles(r ...*Role) *MemberUpdate {
 	return mu.RemoveRoleIDs(ids...)
 }
 
-// ClearDeveloperOf clears all "developerOf" edges to the Organization entity.
-func (mu *MemberUpdate) ClearDeveloperOf() *MemberUpdate {
-	mu.mutation.ClearDeveloperOf()
+// ClearOrganizations clears all "organizations" edges to the Organization entity.
+func (mu *MemberUpdate) ClearOrganizations() *MemberUpdate {
+	mu.mutation.ClearOrganizations()
 	return mu
 }
 
-// RemoveDeveloperOfIDs removes the "developerOf" edge to Organization entities by IDs.
-func (mu *MemberUpdate) RemoveDeveloperOfIDs(ids ...uuid.UUID) *MemberUpdate {
-	mu.mutation.RemoveDeveloperOfIDs(ids...)
+// RemoveOrganizationIDs removes the "organizations" edge to Organization entities by IDs.
+func (mu *MemberUpdate) RemoveOrganizationIDs(ids ...uuid.UUID) *MemberUpdate {
+	mu.mutation.RemoveOrganizationIDs(ids...)
 	return mu
 }
 
-// RemoveDeveloperOf removes "developerOf" edges to Organization entities.
-func (mu *MemberUpdate) RemoveDeveloperOf(o ...*Organization) *MemberUpdate {
+// RemoveOrganizations removes "organizations" edges to Organization entities.
+func (mu *MemberUpdate) RemoveOrganizations(o ...*Organization) *MemberUpdate {
 	ids := make([]uuid.UUID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
-	return mu.RemoveDeveloperOfIDs(ids...)
-}
-
-// ClearManagerOf clears all "managerOf" edges to the Organization entity.
-func (mu *MemberUpdate) ClearManagerOf() *MemberUpdate {
-	mu.mutation.ClearManagerOf()
-	return mu
-}
-
-// RemoveManagerOfIDs removes the "managerOf" edge to Organization entities by IDs.
-func (mu *MemberUpdate) RemoveManagerOfIDs(ids ...uuid.UUID) *MemberUpdate {
-	mu.mutation.RemoveManagerOfIDs(ids...)
-	return mu
-}
-
-// RemoveManagerOf removes "managerOf" edges to Organization entities.
-func (mu *MemberUpdate) RemoveManagerOf(o ...*Organization) *MemberUpdate {
-	ids := make([]uuid.UUID, len(o))
-	for i := range o {
-		ids[i] = o[i].ID
-	}
-	return mu.RemoveManagerOfIDs(ids...)
+	return mu.RemoveOrganizationIDs(ids...)
 }
 
 // ClearTasks clears all "tasks" edges to the Task entity.
@@ -321,6 +291,13 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: member.FieldEmail,
 		})
 	}
+	if value, ok := mu.mutation.AuthID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeUUID,
+			Value:  value,
+			Column: member.FieldAuthID,
+		})
+	}
 	if mu.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -375,12 +352,12 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if mu.mutation.DeveloperOfCleared() {
+	if mu.mutation.OrganizationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -391,12 +368,12 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mu.mutation.RemovedDeveloperOfIDs(); len(nodes) > 0 && !mu.mutation.DeveloperOfCleared() {
+	if nodes := mu.mutation.RemovedOrganizationsIDs(); len(nodes) > 0 && !mu.mutation.OrganizationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -410,66 +387,12 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mu.mutation.DeveloperOfIDs(); len(nodes) > 0 {
+	if nodes := mu.mutation.OrganizationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if mu.mutation.ManagerOfCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := mu.mutation.RemovedManagerOfIDs(); len(nodes) > 0 && !mu.mutation.ManagerOfCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := mu.mutation.ManagerOfIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -588,6 +511,12 @@ func (muo *MemberUpdateOne) SetEmail(s string) *MemberUpdateOne {
 	return muo
 }
 
+// SetAuthID sets the "authID" field.
+func (muo *MemberUpdateOne) SetAuthID(u uuid.UUID) *MemberUpdateOne {
+	muo.mutation.SetAuthID(u)
+	return muo
+}
+
 // AddRoleIDs adds the "roles" edge to the Role entity by IDs.
 func (muo *MemberUpdateOne) AddRoleIDs(ids ...uuid.UUID) *MemberUpdateOne {
 	muo.mutation.AddRoleIDs(ids...)
@@ -603,34 +532,19 @@ func (muo *MemberUpdateOne) AddRoles(r ...*Role) *MemberUpdateOne {
 	return muo.AddRoleIDs(ids...)
 }
 
-// AddDeveloperOfIDs adds the "developerOf" edge to the Organization entity by IDs.
-func (muo *MemberUpdateOne) AddDeveloperOfIDs(ids ...uuid.UUID) *MemberUpdateOne {
-	muo.mutation.AddDeveloperOfIDs(ids...)
+// AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
+func (muo *MemberUpdateOne) AddOrganizationIDs(ids ...uuid.UUID) *MemberUpdateOne {
+	muo.mutation.AddOrganizationIDs(ids...)
 	return muo
 }
 
-// AddDeveloperOf adds the "developerOf" edges to the Organization entity.
-func (muo *MemberUpdateOne) AddDeveloperOf(o ...*Organization) *MemberUpdateOne {
+// AddOrganizations adds the "organizations" edges to the Organization entity.
+func (muo *MemberUpdateOne) AddOrganizations(o ...*Organization) *MemberUpdateOne {
 	ids := make([]uuid.UUID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
-	return muo.AddDeveloperOfIDs(ids...)
-}
-
-// AddManagerOfIDs adds the "managerOf" edge to the Organization entity by IDs.
-func (muo *MemberUpdateOne) AddManagerOfIDs(ids ...uuid.UUID) *MemberUpdateOne {
-	muo.mutation.AddManagerOfIDs(ids...)
-	return muo
-}
-
-// AddManagerOf adds the "managerOf" edges to the Organization entity.
-func (muo *MemberUpdateOne) AddManagerOf(o ...*Organization) *MemberUpdateOne {
-	ids := make([]uuid.UUID, len(o))
-	for i := range o {
-		ids[i] = o[i].ID
-	}
-	return muo.AddManagerOfIDs(ids...)
+	return muo.AddOrganizationIDs(ids...)
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
@@ -674,46 +588,25 @@ func (muo *MemberUpdateOne) RemoveRoles(r ...*Role) *MemberUpdateOne {
 	return muo.RemoveRoleIDs(ids...)
 }
 
-// ClearDeveloperOf clears all "developerOf" edges to the Organization entity.
-func (muo *MemberUpdateOne) ClearDeveloperOf() *MemberUpdateOne {
-	muo.mutation.ClearDeveloperOf()
+// ClearOrganizations clears all "organizations" edges to the Organization entity.
+func (muo *MemberUpdateOne) ClearOrganizations() *MemberUpdateOne {
+	muo.mutation.ClearOrganizations()
 	return muo
 }
 
-// RemoveDeveloperOfIDs removes the "developerOf" edge to Organization entities by IDs.
-func (muo *MemberUpdateOne) RemoveDeveloperOfIDs(ids ...uuid.UUID) *MemberUpdateOne {
-	muo.mutation.RemoveDeveloperOfIDs(ids...)
+// RemoveOrganizationIDs removes the "organizations" edge to Organization entities by IDs.
+func (muo *MemberUpdateOne) RemoveOrganizationIDs(ids ...uuid.UUID) *MemberUpdateOne {
+	muo.mutation.RemoveOrganizationIDs(ids...)
 	return muo
 }
 
-// RemoveDeveloperOf removes "developerOf" edges to Organization entities.
-func (muo *MemberUpdateOne) RemoveDeveloperOf(o ...*Organization) *MemberUpdateOne {
+// RemoveOrganizations removes "organizations" edges to Organization entities.
+func (muo *MemberUpdateOne) RemoveOrganizations(o ...*Organization) *MemberUpdateOne {
 	ids := make([]uuid.UUID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
-	return muo.RemoveDeveloperOfIDs(ids...)
-}
-
-// ClearManagerOf clears all "managerOf" edges to the Organization entity.
-func (muo *MemberUpdateOne) ClearManagerOf() *MemberUpdateOne {
-	muo.mutation.ClearManagerOf()
-	return muo
-}
-
-// RemoveManagerOfIDs removes the "managerOf" edge to Organization entities by IDs.
-func (muo *MemberUpdateOne) RemoveManagerOfIDs(ids ...uuid.UUID) *MemberUpdateOne {
-	muo.mutation.RemoveManagerOfIDs(ids...)
-	return muo
-}
-
-// RemoveManagerOf removes "managerOf" edges to Organization entities.
-func (muo *MemberUpdateOne) RemoveManagerOf(o ...*Organization) *MemberUpdateOne {
-	ids := make([]uuid.UUID, len(o))
-	for i := range o {
-		ids[i] = o[i].ID
-	}
-	return muo.RemoveManagerOfIDs(ids...)
+	return muo.RemoveOrganizationIDs(ids...)
 }
 
 // ClearTasks clears all "tasks" edges to the Task entity.
@@ -870,6 +763,13 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 			Column: member.FieldEmail,
 		})
 	}
+	if value, ok := muo.mutation.AuthID(); ok {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeUUID,
+			Value:  value,
+			Column: member.FieldAuthID,
+		})
+	}
 	if muo.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -924,12 +824,12 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if muo.mutation.DeveloperOfCleared() {
+	if muo.mutation.OrganizationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -940,12 +840,12 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := muo.mutation.RemovedDeveloperOfIDs(); len(nodes) > 0 && !muo.mutation.DeveloperOfCleared() {
+	if nodes := muo.mutation.RemovedOrganizationsIDs(); len(nodes) > 0 && !muo.mutation.OrganizationsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -959,66 +859,12 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := muo.mutation.DeveloperOfIDs(); len(nodes) > 0 {
+	if nodes := muo.mutation.OrganizationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if muo.mutation.ManagerOfCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := muo.mutation.RemovedManagerOfIDs(); len(nodes) > 0 && !muo.mutation.ManagerOfCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := muo.mutation.ManagerOfIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

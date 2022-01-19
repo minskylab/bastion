@@ -78,34 +78,19 @@ func (oc *OrganizationCreate) AddProjects(p ...*Project) *OrganizationCreate {
 	return oc.AddProjectIDs(ids...)
 }
 
-// AddDeveloperIDs adds the "developers" edge to the Member entity by IDs.
-func (oc *OrganizationCreate) AddDeveloperIDs(ids ...uuid.UUID) *OrganizationCreate {
-	oc.mutation.AddDeveloperIDs(ids...)
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (oc *OrganizationCreate) AddMemberIDs(ids ...uuid.UUID) *OrganizationCreate {
+	oc.mutation.AddMemberIDs(ids...)
 	return oc
 }
 
-// AddDevelopers adds the "developers" edges to the Member entity.
-func (oc *OrganizationCreate) AddDevelopers(m ...*Member) *OrganizationCreate {
+// AddMembers adds the "members" edges to the Member entity.
+func (oc *OrganizationCreate) AddMembers(m ...*Member) *OrganizationCreate {
 	ids := make([]uuid.UUID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return oc.AddDeveloperIDs(ids...)
-}
-
-// AddManagerIDs adds the "managers" edge to the Member entity by IDs.
-func (oc *OrganizationCreate) AddManagerIDs(ids ...uuid.UUID) *OrganizationCreate {
-	oc.mutation.AddManagerIDs(ids...)
-	return oc
-}
-
-// AddManagers adds the "managers" edges to the Member entity.
-func (oc *OrganizationCreate) AddManagers(m ...*Member) *OrganizationCreate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
-	}
-	return oc.AddManagerIDs(ids...)
+	return oc.AddMemberIDs(ids...)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -279,31 +264,12 @@ func (oc *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := oc.mutation.DevelopersIDs(); len(nodes) > 0 {
+	if nodes := oc.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := oc.mutation.ManagersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

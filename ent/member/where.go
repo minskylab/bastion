@@ -122,6 +122,13 @@ func Email(v string) predicate.Member {
 	})
 }
 
+// AuthID applies equality check predicate on the "authID" field. It's identical to AuthIDEQ.
+func AuthID(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldAuthID), v))
+	})
+}
+
 // CreatedAtEQ applies the EQ predicate on the "createdAt" field.
 func CreatedAtEQ(v time.Time) predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
@@ -496,6 +503,82 @@ func EmailContainsFold(v string) predicate.Member {
 	})
 }
 
+// AuthIDEQ applies the EQ predicate on the "authID" field.
+func AuthIDEQ(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldAuthID), v))
+	})
+}
+
+// AuthIDNEQ applies the NEQ predicate on the "authID" field.
+func AuthIDNEQ(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldAuthID), v))
+	})
+}
+
+// AuthIDIn applies the In predicate on the "authID" field.
+func AuthIDIn(vs ...uuid.UUID) predicate.Member {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Member(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldAuthID), v...))
+	})
+}
+
+// AuthIDNotIn applies the NotIn predicate on the "authID" field.
+func AuthIDNotIn(vs ...uuid.UUID) predicate.Member {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Member(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(v) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldAuthID), v...))
+	})
+}
+
+// AuthIDGT applies the GT predicate on the "authID" field.
+func AuthIDGT(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldAuthID), v))
+	})
+}
+
+// AuthIDGTE applies the GTE predicate on the "authID" field.
+func AuthIDGTE(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldAuthID), v))
+	})
+}
+
+// AuthIDLT applies the LT predicate on the "authID" field.
+func AuthIDLT(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldAuthID), v))
+	})
+}
+
+// AuthIDLTE applies the LTE predicate on the "authID" field.
+func AuthIDLTE(v uuid.UUID) predicate.Member {
+	return predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldAuthID), v))
+	})
+}
+
 // HasRoles applies the HasEdge predicate on the "roles" edge.
 func HasRoles() predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
@@ -524,53 +607,25 @@ func HasRolesWith(preds ...predicate.Role) predicate.Member {
 	})
 }
 
-// HasDeveloperOf applies the HasEdge predicate on the "developerOf" edge.
-func HasDeveloperOf() predicate.Member {
+// HasOrganizations applies the HasEdge predicate on the "organizations" edge.
+func HasOrganizations() predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(DeveloperOfTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, DeveloperOfTable, DeveloperOfPrimaryKey...),
+			sqlgraph.To(OrganizationsTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, OrganizationsTable, OrganizationsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasDeveloperOfWith applies the HasEdge predicate on the "developerOf" edge with a given conditions (other predicates).
-func HasDeveloperOfWith(preds ...predicate.Organization) predicate.Member {
+// HasOrganizationsWith applies the HasEdge predicate on the "organizations" edge with a given conditions (other predicates).
+func HasOrganizationsWith(preds ...predicate.Organization) predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(DeveloperOfInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, DeveloperOfTable, DeveloperOfPrimaryKey...),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasManagerOf applies the HasEdge predicate on the "managerOf" edge.
-func HasManagerOf() predicate.Member {
-	return predicate.Member(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ManagerOfTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, ManagerOfTable, ManagerOfPrimaryKey...),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasManagerOfWith applies the HasEdge predicate on the "managerOf" edge with a given conditions (other predicates).
-func HasManagerOfWith(preds ...predicate.Organization) predicate.Member {
-	return predicate.Member(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ManagerOfInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, ManagerOfTable, ManagerOfPrimaryKey...),
+			sqlgraph.To(OrganizationsInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, OrganizationsTable, OrganizationsPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

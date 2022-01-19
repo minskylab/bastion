@@ -25,6 +25,8 @@ type Member struct {
 	Name string `json:"name,omitempty"`
 	// Email holds the value of the "email" field.
 	Email string `json:"email,omitempty"`
+	// AuthID holds the value of the "authID" field.
+	AuthID uuid.UUID `json:"authID,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MemberQuery when eager-loading is set.
 	Edges MemberEdges `json:"edges"`
@@ -34,15 +36,13 @@ type Member struct {
 type MemberEdges struct {
 	// Roles holds the value of the roles edge.
 	Roles []*Role `json:"roles,omitempty"`
-	// DeveloperOf holds the value of the developerOf edge.
-	DeveloperOf []*Organization `json:"developerOf,omitempty"`
-	// ManagerOf holds the value of the managerOf edge.
-	ManagerOf []*Organization `json:"managerOf,omitempty"`
+	// Organizations holds the value of the organizations edge.
+	Organizations []*Organization `json:"organizations,omitempty"`
 	// Tasks holds the value of the tasks edge.
 	Tasks []*Task `json:"tasks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [3]bool
 }
 
 // RolesOrErr returns the Roles value or an error if the edge
@@ -54,28 +54,19 @@ func (e MemberEdges) RolesOrErr() ([]*Role, error) {
 	return nil, &NotLoadedError{edge: "roles"}
 }
 
-// DeveloperOfOrErr returns the DeveloperOf value or an error if the edge
+// OrganizationsOrErr returns the Organizations value or an error if the edge
 // was not loaded in eager-loading.
-func (e MemberEdges) DeveloperOfOrErr() ([]*Organization, error) {
+func (e MemberEdges) OrganizationsOrErr() ([]*Organization, error) {
 	if e.loadedTypes[1] {
-		return e.DeveloperOf, nil
+		return e.Organizations, nil
 	}
-	return nil, &NotLoadedError{edge: "developerOf"}
-}
-
-// ManagerOfOrErr returns the ManagerOf value or an error if the edge
-// was not loaded in eager-loading.
-func (e MemberEdges) ManagerOfOrErr() ([]*Organization, error) {
-	if e.loadedTypes[2] {
-		return e.ManagerOf, nil
-	}
-	return nil, &NotLoadedError{edge: "managerOf"}
+	return nil, &NotLoadedError{edge: "organizations"}
 }
 
 // TasksOrErr returns the Tasks value or an error if the edge
 // was not loaded in eager-loading.
 func (e MemberEdges) TasksOrErr() ([]*Task, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[2] {
 		return e.Tasks, nil
 	}
 	return nil, &NotLoadedError{edge: "tasks"}
@@ -90,7 +81,7 @@ func (*Member) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullString)
 		case member.FieldCreatedAt, member.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case member.FieldID:
+		case member.FieldID, member.FieldAuthID:
 			values[i] = new(uuid.UUID)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Member", columns[i])
@@ -137,6 +128,12 @@ func (m *Member) assignValues(columns []string, values []interface{}) error {
 			} else if value.Valid {
 				m.Email = value.String
 			}
+		case member.FieldAuthID:
+			if value, ok := values[i].(*uuid.UUID); !ok {
+				return fmt.Errorf("unexpected type %T for field authID", values[i])
+			} else if value != nil {
+				m.AuthID = *value
+			}
 		}
 	}
 	return nil
@@ -147,14 +144,9 @@ func (m *Member) QueryRoles() *RoleQuery {
 	return (&MemberClient{config: m.config}).QueryRoles(m)
 }
 
-// QueryDeveloperOf queries the "developerOf" edge of the Member entity.
-func (m *Member) QueryDeveloperOf() *OrganizationQuery {
-	return (&MemberClient{config: m.config}).QueryDeveloperOf(m)
-}
-
-// QueryManagerOf queries the "managerOf" edge of the Member entity.
-func (m *Member) QueryManagerOf() *OrganizationQuery {
-	return (&MemberClient{config: m.config}).QueryManagerOf(m)
+// QueryOrganizations queries the "organizations" edge of the Member entity.
+func (m *Member) QueryOrganizations() *OrganizationQuery {
+	return (&MemberClient{config: m.config}).QueryOrganizations(m)
 }
 
 // QueryTasks queries the "tasks" edge of the Member entity.
@@ -193,6 +185,8 @@ func (m *Member) String() string {
 	builder.WriteString(m.Name)
 	builder.WriteString(", email=")
 	builder.WriteString(m.Email)
+	builder.WriteString(", authID=")
+	builder.WriteString(fmt.Sprintf("%v", m.AuthID))
 	builder.WriteByte(')')
 	return builder.String()
 }

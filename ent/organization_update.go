@@ -71,34 +71,19 @@ func (ou *OrganizationUpdate) AddProjects(p ...*Project) *OrganizationUpdate {
 	return ou.AddProjectIDs(ids...)
 }
 
-// AddDeveloperIDs adds the "developers" edge to the Member entity by IDs.
-func (ou *OrganizationUpdate) AddDeveloperIDs(ids ...uuid.UUID) *OrganizationUpdate {
-	ou.mutation.AddDeveloperIDs(ids...)
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (ou *OrganizationUpdate) AddMemberIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	ou.mutation.AddMemberIDs(ids...)
 	return ou
 }
 
-// AddDevelopers adds the "developers" edges to the Member entity.
-func (ou *OrganizationUpdate) AddDevelopers(m ...*Member) *OrganizationUpdate {
+// AddMembers adds the "members" edges to the Member entity.
+func (ou *OrganizationUpdate) AddMembers(m ...*Member) *OrganizationUpdate {
 	ids := make([]uuid.UUID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return ou.AddDeveloperIDs(ids...)
-}
-
-// AddManagerIDs adds the "managers" edge to the Member entity by IDs.
-func (ou *OrganizationUpdate) AddManagerIDs(ids ...uuid.UUID) *OrganizationUpdate {
-	ou.mutation.AddManagerIDs(ids...)
-	return ou
-}
-
-// AddManagers adds the "managers" edges to the Member entity.
-func (ou *OrganizationUpdate) AddManagers(m ...*Member) *OrganizationUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
-	}
-	return ou.AddManagerIDs(ids...)
+	return ou.AddMemberIDs(ids...)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -127,46 +112,25 @@ func (ou *OrganizationUpdate) RemoveProjects(p ...*Project) *OrganizationUpdate 
 	return ou.RemoveProjectIDs(ids...)
 }
 
-// ClearDevelopers clears all "developers" edges to the Member entity.
-func (ou *OrganizationUpdate) ClearDevelopers() *OrganizationUpdate {
-	ou.mutation.ClearDevelopers()
+// ClearMembers clears all "members" edges to the Member entity.
+func (ou *OrganizationUpdate) ClearMembers() *OrganizationUpdate {
+	ou.mutation.ClearMembers()
 	return ou
 }
 
-// RemoveDeveloperIDs removes the "developers" edge to Member entities by IDs.
-func (ou *OrganizationUpdate) RemoveDeveloperIDs(ids ...uuid.UUID) *OrganizationUpdate {
-	ou.mutation.RemoveDeveloperIDs(ids...)
+// RemoveMemberIDs removes the "members" edge to Member entities by IDs.
+func (ou *OrganizationUpdate) RemoveMemberIDs(ids ...uuid.UUID) *OrganizationUpdate {
+	ou.mutation.RemoveMemberIDs(ids...)
 	return ou
 }
 
-// RemoveDevelopers removes "developers" edges to Member entities.
-func (ou *OrganizationUpdate) RemoveDevelopers(m ...*Member) *OrganizationUpdate {
+// RemoveMembers removes "members" edges to Member entities.
+func (ou *OrganizationUpdate) RemoveMembers(m ...*Member) *OrganizationUpdate {
 	ids := make([]uuid.UUID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return ou.RemoveDeveloperIDs(ids...)
-}
-
-// ClearManagers clears all "managers" edges to the Member entity.
-func (ou *OrganizationUpdate) ClearManagers() *OrganizationUpdate {
-	ou.mutation.ClearManagers()
-	return ou
-}
-
-// RemoveManagerIDs removes the "managers" edge to Member entities by IDs.
-func (ou *OrganizationUpdate) RemoveManagerIDs(ids ...uuid.UUID) *OrganizationUpdate {
-	ou.mutation.RemoveManagerIDs(ids...)
-	return ou
-}
-
-// RemoveManagers removes "managers" edges to Member entities.
-func (ou *OrganizationUpdate) RemoveManagers(m ...*Member) *OrganizationUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
-	}
-	return ou.RemoveManagerIDs(ids...)
+	return ou.RemoveMemberIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -325,12 +289,12 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ou.mutation.DevelopersCleared() {
+	if ou.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -341,12 +305,12 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ou.mutation.RemovedDevelopersIDs(); len(nodes) > 0 && !ou.mutation.DevelopersCleared() {
+	if nodes := ou.mutation.RemovedMembersIDs(); len(nodes) > 0 && !ou.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -360,66 +324,12 @@ func (ou *OrganizationUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ou.mutation.DevelopersIDs(); len(nodes) > 0 {
+	if nodes := ou.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if ou.mutation.ManagersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ou.mutation.RemovedManagersIDs(); len(nodes) > 0 && !ou.mutation.ManagersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ou.mutation.ManagersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -493,34 +403,19 @@ func (ouo *OrganizationUpdateOne) AddProjects(p ...*Project) *OrganizationUpdate
 	return ouo.AddProjectIDs(ids...)
 }
 
-// AddDeveloperIDs adds the "developers" edge to the Member entity by IDs.
-func (ouo *OrganizationUpdateOne) AddDeveloperIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
-	ouo.mutation.AddDeveloperIDs(ids...)
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (ouo *OrganizationUpdateOne) AddMemberIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.AddMemberIDs(ids...)
 	return ouo
 }
 
-// AddDevelopers adds the "developers" edges to the Member entity.
-func (ouo *OrganizationUpdateOne) AddDevelopers(m ...*Member) *OrganizationUpdateOne {
+// AddMembers adds the "members" edges to the Member entity.
+func (ouo *OrganizationUpdateOne) AddMembers(m ...*Member) *OrganizationUpdateOne {
 	ids := make([]uuid.UUID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return ouo.AddDeveloperIDs(ids...)
-}
-
-// AddManagerIDs adds the "managers" edge to the Member entity by IDs.
-func (ouo *OrganizationUpdateOne) AddManagerIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
-	ouo.mutation.AddManagerIDs(ids...)
-	return ouo
-}
-
-// AddManagers adds the "managers" edges to the Member entity.
-func (ouo *OrganizationUpdateOne) AddManagers(m ...*Member) *OrganizationUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
-	}
-	return ouo.AddManagerIDs(ids...)
+	return ouo.AddMemberIDs(ids...)
 }
 
 // Mutation returns the OrganizationMutation object of the builder.
@@ -549,46 +444,25 @@ func (ouo *OrganizationUpdateOne) RemoveProjects(p ...*Project) *OrganizationUpd
 	return ouo.RemoveProjectIDs(ids...)
 }
 
-// ClearDevelopers clears all "developers" edges to the Member entity.
-func (ouo *OrganizationUpdateOne) ClearDevelopers() *OrganizationUpdateOne {
-	ouo.mutation.ClearDevelopers()
+// ClearMembers clears all "members" edges to the Member entity.
+func (ouo *OrganizationUpdateOne) ClearMembers() *OrganizationUpdateOne {
+	ouo.mutation.ClearMembers()
 	return ouo
 }
 
-// RemoveDeveloperIDs removes the "developers" edge to Member entities by IDs.
-func (ouo *OrganizationUpdateOne) RemoveDeveloperIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
-	ouo.mutation.RemoveDeveloperIDs(ids...)
+// RemoveMemberIDs removes the "members" edge to Member entities by IDs.
+func (ouo *OrganizationUpdateOne) RemoveMemberIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
+	ouo.mutation.RemoveMemberIDs(ids...)
 	return ouo
 }
 
-// RemoveDevelopers removes "developers" edges to Member entities.
-func (ouo *OrganizationUpdateOne) RemoveDevelopers(m ...*Member) *OrganizationUpdateOne {
+// RemoveMembers removes "members" edges to Member entities.
+func (ouo *OrganizationUpdateOne) RemoveMembers(m ...*Member) *OrganizationUpdateOne {
 	ids := make([]uuid.UUID, len(m))
 	for i := range m {
 		ids[i] = m[i].ID
 	}
-	return ouo.RemoveDeveloperIDs(ids...)
-}
-
-// ClearManagers clears all "managers" edges to the Member entity.
-func (ouo *OrganizationUpdateOne) ClearManagers() *OrganizationUpdateOne {
-	ouo.mutation.ClearManagers()
-	return ouo
-}
-
-// RemoveManagerIDs removes the "managers" edge to Member entities by IDs.
-func (ouo *OrganizationUpdateOne) RemoveManagerIDs(ids ...uuid.UUID) *OrganizationUpdateOne {
-	ouo.mutation.RemoveManagerIDs(ids...)
-	return ouo
-}
-
-// RemoveManagers removes "managers" edges to Member entities.
-func (ouo *OrganizationUpdateOne) RemoveManagers(m ...*Member) *OrganizationUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
-	}
-	return ouo.RemoveManagerIDs(ids...)
+	return ouo.RemoveMemberIDs(ids...)
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
@@ -771,12 +645,12 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ouo.mutation.DevelopersCleared() {
+	if ouo.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -787,12 +661,12 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ouo.mutation.RemovedDevelopersIDs(); len(nodes) > 0 && !ouo.mutation.DevelopersCleared() {
+	if nodes := ouo.mutation.RemovedMembersIDs(); len(nodes) > 0 && !ouo.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
@@ -806,66 +680,12 @@ func (ouo *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizat
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ouo.mutation.DevelopersIDs(); len(nodes) > 0 {
+	if nodes := ouo.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
-			Table:   organization.DevelopersTable,
-			Columns: organization.DevelopersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if ouo.mutation.ManagersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ouo.mutation.RemovedManagersIDs(); len(nodes) > 0 && !ouo.mutation.ManagersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: member.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := ouo.mutation.ManagersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   organization.ManagersTable,
-			Columns: organization.ManagersPrimaryKey,
+			Table:   organization.MembersTable,
+			Columns: organization.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{

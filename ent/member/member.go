@@ -21,12 +21,12 @@ const (
 	FieldName = "name"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
+	// FieldAuthID holds the string denoting the authid field in the database.
+	FieldAuthID = "auth_id"
 	// EdgeRoles holds the string denoting the roles edge name in mutations.
 	EdgeRoles = "roles"
-	// EdgeDeveloperOf holds the string denoting the developerof edge name in mutations.
-	EdgeDeveloperOf = "developerOf"
-	// EdgeManagerOf holds the string denoting the managerof edge name in mutations.
-	EdgeManagerOf = "managerOf"
+	// EdgeOrganizations holds the string denoting the organizations edge name in mutations.
+	EdgeOrganizations = "organizations"
 	// EdgeTasks holds the string denoting the tasks edge name in mutations.
 	EdgeTasks = "tasks"
 	// Table holds the table name of the member in the database.
@@ -36,16 +36,11 @@ const (
 	// RolesInverseTable is the table name for the Role entity.
 	// It exists in this package in order to avoid circular dependency with the "role" package.
 	RolesInverseTable = "roles"
-	// DeveloperOfTable is the table that holds the developerOf relation/edge. The primary key declared below.
-	DeveloperOfTable = "organization_developers"
-	// DeveloperOfInverseTable is the table name for the Organization entity.
+	// OrganizationsTable is the table that holds the organizations relation/edge. The primary key declared below.
+	OrganizationsTable = "organization_members"
+	// OrganizationsInverseTable is the table name for the Organization entity.
 	// It exists in this package in order to avoid circular dependency with the "organization" package.
-	DeveloperOfInverseTable = "organizations"
-	// ManagerOfTable is the table that holds the managerOf relation/edge. The primary key declared below.
-	ManagerOfTable = "organization_managers"
-	// ManagerOfInverseTable is the table name for the Organization entity.
-	// It exists in this package in order to avoid circular dependency with the "organization" package.
-	ManagerOfInverseTable = "organizations"
+	OrganizationsInverseTable = "organizations"
 	// TasksTable is the table that holds the tasks relation/edge. The primary key declared below.
 	TasksTable = "task_assignees"
 	// TasksInverseTable is the table name for the Task entity.
@@ -60,18 +55,16 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldName,
 	FieldEmail,
+	FieldAuthID,
 }
 
 var (
 	// RolesPrimaryKey and RolesColumn2 are the table columns denoting the
 	// primary key for the roles relation (M2M).
 	RolesPrimaryKey = []string{"member_id", "role_id"}
-	// DeveloperOfPrimaryKey and DeveloperOfColumn2 are the table columns denoting the
-	// primary key for the developerOf relation (M2M).
-	DeveloperOfPrimaryKey = []string{"organization_id", "member_id"}
-	// ManagerOfPrimaryKey and ManagerOfColumn2 are the table columns denoting the
-	// primary key for the managerOf relation (M2M).
-	ManagerOfPrimaryKey = []string{"organization_id", "member_id"}
+	// OrganizationsPrimaryKey and OrganizationsColumn2 are the table columns denoting the
+	// primary key for the organizations relation (M2M).
+	OrganizationsPrimaryKey = []string{"organization_id", "member_id"}
 	// TasksPrimaryKey and TasksColumn2 are the table columns denoting the
 	// primary key for the tasks relation (M2M).
 	TasksPrimaryKey = []string{"task_id", "member_id"}

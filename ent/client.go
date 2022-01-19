@@ -252,31 +252,15 @@ func (c *MemberClient) QueryRoles(m *Member) *RoleQuery {
 	return query
 }
 
-// QueryDeveloperOf queries the developerOf edge of a Member.
-func (c *MemberClient) QueryDeveloperOf(m *Member) *OrganizationQuery {
+// QueryOrganizations queries the organizations edge of a Member.
+func (c *MemberClient) QueryOrganizations(m *Member) *OrganizationQuery {
 	query := &OrganizationQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(member.Table, member.FieldID, id),
 			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, member.DeveloperOfTable, member.DeveloperOfPrimaryKey...),
-		)
-		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryManagerOf queries the managerOf edge of a Member.
-func (c *MemberClient) QueryManagerOf(m *Member) *OrganizationQuery {
-	query := &OrganizationQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
-		id := m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(member.Table, member.FieldID, id),
-			sqlgraph.To(organization.Table, organization.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, member.ManagerOfTable, member.ManagerOfPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, true, member.OrganizationsTable, member.OrganizationsPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
 		return fromV, nil
@@ -406,31 +390,15 @@ func (c *OrganizationClient) QueryProjects(o *Organization) *ProjectQuery {
 	return query
 }
 
-// QueryDevelopers queries the developers edge of a Organization.
-func (c *OrganizationClient) QueryDevelopers(o *Organization) *MemberQuery {
+// QueryMembers queries the members edge of a Organization.
+func (c *OrganizationClient) QueryMembers(o *Organization) *MemberQuery {
 	query := &MemberQuery{config: c.config}
 	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
 		id := o.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(organization.Table, organization.FieldID, id),
 			sqlgraph.To(member.Table, member.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, organization.DevelopersTable, organization.DevelopersPrimaryKey...),
-		)
-		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryManagers queries the managers edge of a Organization.
-func (c *OrganizationClient) QueryManagers(o *Organization) *MemberQuery {
-	query := &MemberQuery{config: c.config}
-	query.path = func(ctx context.Context) (fromV *sql.Selector, _ error) {
-		id := o.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(organization.Table, organization.FieldID, id),
-			sqlgraph.To(member.Table, member.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, organization.ManagersTable, organization.ManagersPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2M, false, organization.MembersTable, organization.MembersPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(o.driver.Dialect(), step)
 		return fromV, nil

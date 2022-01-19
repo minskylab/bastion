@@ -21,10 +21,8 @@ const (
 	FieldName = "name"
 	// EdgeProjects holds the string denoting the projects edge name in mutations.
 	EdgeProjects = "projects"
-	// EdgeDevelopers holds the string denoting the developers edge name in mutations.
-	EdgeDevelopers = "developers"
-	// EdgeManagers holds the string denoting the managers edge name in mutations.
-	EdgeManagers = "managers"
+	// EdgeMembers holds the string denoting the members edge name in mutations.
+	EdgeMembers = "members"
 	// Table holds the table name of the organization in the database.
 	Table = "organizations"
 	// ProjectsTable is the table that holds the projects relation/edge. The primary key declared below.
@@ -32,16 +30,11 @@ const (
 	// ProjectsInverseTable is the table name for the Project entity.
 	// It exists in this package in order to avoid circular dependency with the "project" package.
 	ProjectsInverseTable = "projects"
-	// DevelopersTable is the table that holds the developers relation/edge. The primary key declared below.
-	DevelopersTable = "organization_developers"
-	// DevelopersInverseTable is the table name for the Member entity.
+	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
+	MembersTable = "organization_members"
+	// MembersInverseTable is the table name for the Member entity.
 	// It exists in this package in order to avoid circular dependency with the "member" package.
-	DevelopersInverseTable = "members"
-	// ManagersTable is the table that holds the managers relation/edge. The primary key declared below.
-	ManagersTable = "organization_managers"
-	// ManagersInverseTable is the table name for the Member entity.
-	// It exists in this package in order to avoid circular dependency with the "member" package.
-	ManagersInverseTable = "members"
+	MembersInverseTable = "members"
 )
 
 // Columns holds all SQL columns for organization fields.
@@ -56,12 +49,9 @@ var (
 	// ProjectsPrimaryKey and ProjectsColumn2 are the table columns denoting the
 	// primary key for the projects relation (M2M).
 	ProjectsPrimaryKey = []string{"organization_id", "project_id"}
-	// DevelopersPrimaryKey and DevelopersColumn2 are the table columns denoting the
-	// primary key for the developers relation (M2M).
-	DevelopersPrimaryKey = []string{"organization_id", "member_id"}
-	// ManagersPrimaryKey and ManagersColumn2 are the table columns denoting the
-	// primary key for the managers relation (M2M).
-	ManagersPrimaryKey = []string{"organization_id", "member_id"}
+	// MembersPrimaryKey and MembersColumn2 are the table columns denoting the
+	// primary key for the members relation (M2M).
+	MembersPrimaryKey = []string{"organization_id", "member_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).

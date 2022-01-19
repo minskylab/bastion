@@ -2,9 +2,11 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/minskylab/bastion/core"
+	hasura "github.com/minskylab/ent-hasura"
 )
 
 // Organization holds the schema definition for the Organization entity.
@@ -23,7 +25,21 @@ func (Organization) Fields() []ent.Field {
 func (Organization) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("projects", Project.Type),
-		edge.To("developers", Member.Type),
-		edge.To("managers", Member.Type),
+		edge.To("members", Member.Type),
+	}
+}
+
+func (Organization) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		core.MemberPermissions(
+			&hasura.PermissionSelect{
+				AllColumns:        true,
+				Filter:            hasura.M{},
+				AllowAggregations: true,
+			},
+			nil,
+			nil,
+			nil,
+		),
 	}
 }

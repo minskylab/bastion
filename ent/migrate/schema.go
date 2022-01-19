@@ -15,6 +15,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime, Default: "now()"},
 		{Name: "name", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
+		{Name: "auth_id", Type: field.TypeUUID},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
@@ -127,51 +128,26 @@ var (
 			},
 		},
 	}
-	// OrganizationDevelopersColumns holds the columns for the "organization_developers" table.
-	OrganizationDevelopersColumns = []*schema.Column{
+	// OrganizationMembersColumns holds the columns for the "organization_members" table.
+	OrganizationMembersColumns = []*schema.Column{
 		{Name: "organization_id", Type: field.TypeUUID},
 		{Name: "member_id", Type: field.TypeUUID},
 	}
-	// OrganizationDevelopersTable holds the schema information for the "organization_developers" table.
-	OrganizationDevelopersTable = &schema.Table{
-		Name:       "organization_developers",
-		Columns:    OrganizationDevelopersColumns,
-		PrimaryKey: []*schema.Column{OrganizationDevelopersColumns[0], OrganizationDevelopersColumns[1]},
+	// OrganizationMembersTable holds the schema information for the "organization_members" table.
+	OrganizationMembersTable = &schema.Table{
+		Name:       "organization_members",
+		Columns:    OrganizationMembersColumns,
+		PrimaryKey: []*schema.Column{OrganizationMembersColumns[0], OrganizationMembersColumns[1]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "organization_developers_organization_id",
-				Columns:    []*schema.Column{OrganizationDevelopersColumns[0]},
+				Symbol:     "organization_members_organization_id",
+				Columns:    []*schema.Column{OrganizationMembersColumns[0]},
 				RefColumns: []*schema.Column{OrganizationsColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "organization_developers_member_id",
-				Columns:    []*schema.Column{OrganizationDevelopersColumns[1]},
-				RefColumns: []*schema.Column{MembersColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-		},
-	}
-	// OrganizationManagersColumns holds the columns for the "organization_managers" table.
-	OrganizationManagersColumns = []*schema.Column{
-		{Name: "organization_id", Type: field.TypeUUID},
-		{Name: "member_id", Type: field.TypeUUID},
-	}
-	// OrganizationManagersTable holds the schema information for the "organization_managers" table.
-	OrganizationManagersTable = &schema.Table{
-		Name:       "organization_managers",
-		Columns:    OrganizationManagersColumns,
-		PrimaryKey: []*schema.Column{OrganizationManagersColumns[0], OrganizationManagersColumns[1]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "organization_managers_organization_id",
-				Columns:    []*schema.Column{OrganizationManagersColumns[0]},
-				RefColumns: []*schema.Column{OrganizationsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "organization_managers_member_id",
-				Columns:    []*schema.Column{OrganizationManagersColumns[1]},
+				Symbol:     "organization_members_member_id",
+				Columns:    []*schema.Column{OrganizationMembersColumns[1]},
 				RefColumns: []*schema.Column{MembersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -261,8 +237,7 @@ var (
 		TasksTable,
 		MemberRolesTable,
 		OrganizationProjectsTable,
-		OrganizationDevelopersTable,
-		OrganizationManagersTable,
+		OrganizationMembersTable,
 		ProjectRolesTable,
 		ProjectTasksTable,
 		TaskAssigneesTable,
@@ -274,10 +249,8 @@ func init() {
 	MemberRolesTable.ForeignKeys[1].RefTable = RolesTable
 	OrganizationProjectsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationProjectsTable.ForeignKeys[1].RefTable = ProjectsTable
-	OrganizationDevelopersTable.ForeignKeys[0].RefTable = OrganizationsTable
-	OrganizationDevelopersTable.ForeignKeys[1].RefTable = MembersTable
-	OrganizationManagersTable.ForeignKeys[0].RefTable = OrganizationsTable
-	OrganizationManagersTable.ForeignKeys[1].RefTable = MembersTable
+	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
+	OrganizationMembersTable.ForeignKeys[1].RefTable = MembersTable
 	ProjectRolesTable.ForeignKeys[0].RefTable = ProjectsTable
 	ProjectRolesTable.ForeignKeys[1].RefTable = RolesTable
 	ProjectTasksTable.ForeignKeys[0].RefTable = ProjectsTable

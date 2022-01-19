@@ -2,9 +2,12 @@ package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/minskylab/bastion/core"
+	hasura "github.com/minskylab/ent-hasura"
 )
 
 // Member holds the schema definition for the Member entity.
@@ -17,6 +20,7 @@ func (Member) Fields() []ent.Field {
 	return append(core.SystemFields, []ent.Field{
 		field.String("name"),
 		field.String("email"),
+		field.UUID("authID", uuid.UUID{}),
 	}...)
 }
 
@@ -24,8 +28,28 @@ func (Member) Fields() []ent.Field {
 func (Member) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("roles", Role.Type),
-		edge.From("developerOf", Organization.Type).Ref("developers"),
-		edge.From("managerOf", Organization.Type).Ref("managers"),
+		edge.From("organizations", Organization.Type).Ref("members"),
 		edge.From("tasks", Task.Type).Ref("assignees"),
+	}
+}
+
+func (Member) Annotations() []schema.Annotation {
+	isAuthUser := hasura.M{"auth_id": hasura.Eq("X-Hasura-User-Id")}
+
+	return []schema.Annotation{
+		core.MemberPermissions(
+			&hasura.PermissionSelect{
+				AllColumns:        true,
+				Filter:            isAuthUser,
+				AllowAggregations: true,
+			},
+			nil,
+			&hasura.PermissionUpdate{
+				AllColumns: true,
+				Filter:     isAuthUser,
+				Check:      isAuthUser,
+			},
+			nil,
+		),
 	}
 }

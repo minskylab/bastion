@@ -406,53 +406,25 @@ func HasProjectsWith(preds ...predicate.Project) predicate.Organization {
 	})
 }
 
-// HasDevelopers applies the HasEdge predicate on the "developers" edge.
-func HasDevelopers() predicate.Organization {
+// HasMembers applies the HasEdge predicate on the "members" edge.
+func HasMembers() predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(DevelopersTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, DevelopersTable, DevelopersPrimaryKey...),
+			sqlgraph.To(MembersTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, MembersTable, MembersPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasDevelopersWith applies the HasEdge predicate on the "developers" edge with a given conditions (other predicates).
-func HasDevelopersWith(preds ...predicate.Member) predicate.Organization {
+// HasMembersWith applies the HasEdge predicate on the "members" edge with a given conditions (other predicates).
+func HasMembersWith(preds ...predicate.Member) predicate.Organization {
 	return predicate.Organization(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(DevelopersInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, DevelopersTable, DevelopersPrimaryKey...),
-		)
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasManagers applies the HasEdge predicate on the "managers" edge.
-func HasManagers() predicate.Organization {
-	return predicate.Organization(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ManagersTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, ManagersTable, ManagersPrimaryKey...),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasManagersWith applies the HasEdge predicate on the "managers" edge with a given conditions (other predicates).
-func HasManagersWith(preds ...predicate.Member) predicate.Organization {
-	return predicate.Organization(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.To(ManagersInverseTable, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, ManagersTable, ManagersPrimaryKey...),
+			sqlgraph.To(MembersInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, MembersTable, MembersPrimaryKey...),
 		)
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {

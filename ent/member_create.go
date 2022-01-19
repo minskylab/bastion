@@ -64,6 +64,12 @@ func (mc *MemberCreate) SetEmail(s string) *MemberCreate {
 	return mc
 }
 
+// SetAuthID sets the "authID" field.
+func (mc *MemberCreate) SetAuthID(u uuid.UUID) *MemberCreate {
+	mc.mutation.SetAuthID(u)
+	return mc
+}
+
 // SetID sets the "id" field.
 func (mc *MemberCreate) SetID(u uuid.UUID) *MemberCreate {
 	mc.mutation.SetID(u)
@@ -85,34 +91,19 @@ func (mc *MemberCreate) AddRoles(r ...*Role) *MemberCreate {
 	return mc.AddRoleIDs(ids...)
 }
 
-// AddDeveloperOfIDs adds the "developerOf" edge to the Organization entity by IDs.
-func (mc *MemberCreate) AddDeveloperOfIDs(ids ...uuid.UUID) *MemberCreate {
-	mc.mutation.AddDeveloperOfIDs(ids...)
+// AddOrganizationIDs adds the "organizations" edge to the Organization entity by IDs.
+func (mc *MemberCreate) AddOrganizationIDs(ids ...uuid.UUID) *MemberCreate {
+	mc.mutation.AddOrganizationIDs(ids...)
 	return mc
 }
 
-// AddDeveloperOf adds the "developerOf" edges to the Organization entity.
-func (mc *MemberCreate) AddDeveloperOf(o ...*Organization) *MemberCreate {
+// AddOrganizations adds the "organizations" edges to the Organization entity.
+func (mc *MemberCreate) AddOrganizations(o ...*Organization) *MemberCreate {
 	ids := make([]uuid.UUID, len(o))
 	for i := range o {
 		ids[i] = o[i].ID
 	}
-	return mc.AddDeveloperOfIDs(ids...)
-}
-
-// AddManagerOfIDs adds the "managerOf" edge to the Organization entity by IDs.
-func (mc *MemberCreate) AddManagerOfIDs(ids ...uuid.UUID) *MemberCreate {
-	mc.mutation.AddManagerOfIDs(ids...)
-	return mc
-}
-
-// AddManagerOf adds the "managerOf" edges to the Organization entity.
-func (mc *MemberCreate) AddManagerOf(o ...*Organization) *MemberCreate {
-	ids := make([]uuid.UUID, len(o))
-	for i := range o {
-		ids[i] = o[i].ID
-	}
-	return mc.AddManagerOfIDs(ids...)
+	return mc.AddOrganizationIDs(ids...)
 }
 
 // AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
@@ -229,6 +220,9 @@ func (mc *MemberCreate) check() error {
 	if _, ok := mc.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "email"`)}
 	}
+	if _, ok := mc.mutation.AuthID(); !ok {
+		return &ValidationError{Name: "authID", err: errors.New(`ent: missing required field "authID"`)}
+	}
 	return nil
 }
 
@@ -293,6 +287,14 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		})
 		_node.Email = value
 	}
+	if value, ok := mc.mutation.AuthID(); ok {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeUUID,
+			Value:  value,
+			Column: member.FieldAuthID,
+		})
+		_node.AuthID = value
+	}
 	if nodes := mc.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -312,31 +314,12 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := mc.mutation.DeveloperOfIDs(); len(nodes) > 0 {
+	if nodes := mc.mutation.OrganizationsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: true,
-			Table:   member.DeveloperOfTable,
-			Columns: member.DeveloperOfPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeUUID,
-					Column: organization.FieldID,
-				},
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := mc.mutation.ManagerOfIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.ManagerOfTable,
-			Columns: member.ManagerOfPrimaryKey,
+			Table:   member.OrganizationsTable,
+			Columns: member.OrganizationsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: &sqlgraph.FieldSpec{
